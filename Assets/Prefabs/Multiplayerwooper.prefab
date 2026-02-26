@@ -48,7 +48,7 @@ GameObject:
   - component: {fileID: 919150866733815510}
   - component: {fileID: 4846681833611093621}
   m_Layer: 0
-  m_Name: playerwooper
+  m_Name: Multiplayerwooper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
