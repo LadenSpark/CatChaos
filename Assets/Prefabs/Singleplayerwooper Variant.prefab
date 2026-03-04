@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &625535610313262037
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8940704150161302736}
+  m_Layer: 0
+  m_Name: LedgeCheck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8940704150161302736
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 625535610313262037}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.75, y: -0.01, z: 0}
+  m_LocalScale: {x: 2.8188074, y: 2.8188074, z: 2.8188074}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8378686510096371361}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &228966227022761350
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -69,7 +100,10 @@ PrefabInstance:
     - {fileID: 919150866733815510, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
     - {fileID: 7088760878238229418, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 8604797167915631399, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8940704150161302736}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5334329665036383071, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       insertIndex: 2
@@ -98,11 +132,24 @@ MonoBehaviour:
   groundCheckRadius: 0.1
   groundLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
+  ledgeDetector: {fileID: 8940704150161302736}
+  ledgeLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  hangChance: 0.4
+  luckMagnitude: 0.2
+  tapsRequired: 5
+  hangMaxTime: 2
   myCollider: {fileID: 7990806124462864673}
 --- !u!70 &7990806124462864673 stripped
 CapsuleCollider2D:
   m_CorrespondingSourceObject: {fileID: 7910704993003320487, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
+  m_PrefabInstance: {fileID: 228966227022761350}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8378686510096371361 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8604797167915631399, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
   m_PrefabInstance: {fileID: 228966227022761350}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &8837000929362382227 stripped
