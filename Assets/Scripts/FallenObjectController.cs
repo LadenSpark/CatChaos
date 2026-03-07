@@ -12,18 +12,22 @@ public class FallenObjectController : MonoBehaviour
     {
         originalPosition = transform.position;
         rb = GetComponent<Rigidbody2D>();
+        if (Input.GetKey(KeyCode.R)) // For testing purposes, press R to reset the object to its original position
+        {
+            ReturnObject();
+        }
     }
     void OnTriggerEnter2D(Collider2D other)
     {
         Debug.Log("Collision Detected with: " + other.gameObject.name);
         if (other.CompareTag("Floor")) // Check if the collided object has the tag "Floor"
         {
-            Debug.Log("Collided with Floor! Returning Object to Original Position.");
+            Debug.Log("Collided with Floor.");
             ReturnObject(); // Call the method to return the object to its original position
         }
         if (other.CompareTag("Dog")) // Check if the collided object has the tag "Dog"
         {
-            Debug.Log("Dog hit!");
+            Debug.Log("Collided with Dog.");
             HitDog(); // Call the method to add points or for hitting the dog
         }
     }
@@ -39,11 +43,9 @@ public class FallenObjectController : MonoBehaviour
         rb.angularVelocity = 0f;
         rb.rotation = 0f;
         rb.position = originalPosition;
-        Debug.Log($"Object's position reset!");
-
+        Debug.Log($"Object's position successfully reset.");
     }
-
-    void HitDog() // This method is called when the object collides with the dog
+void HitDog() // This method is called when the object collides with the dog
     {
         Debug.Log("Hit the dog! Good job!");
         

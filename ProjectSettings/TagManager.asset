@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Dog
   - FallingObject
+  - Floor
   layers:
   - Default
   - TransparentFX
@@ -16,7 +17,7 @@ TagManager:
   - 
   - enemy
   - player
-  - knockable_object
+  - fallenObject
   - 
   - 
   - 

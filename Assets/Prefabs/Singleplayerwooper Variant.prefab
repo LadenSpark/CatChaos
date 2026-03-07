@@ -12,6 +12,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Singleplayerwooper Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 5334329665036383071, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5334329665036383071, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     - target: {fileID: 7088760878238229418, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 3792118153
