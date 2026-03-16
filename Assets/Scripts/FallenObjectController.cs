@@ -12,14 +12,11 @@ public class FallenObjectController : MonoBehaviour
     {
         originalPosition = transform.position;
         rb = GetComponent<Rigidbody2D>();
-        if (Input.GetKey(KeyCode.R)) // For testing purposes, press R to reset the object to its original position
-        {
-            ReturnObject();
-        }
     }
     void OnTriggerEnter2D(Collider2D other)
     {
         Debug.Log("Collision Detected with: " + other.gameObject.name);
+
         if (other.CompareTag("Floor")) // Check if the collided object has the tag "Floor"
         {
             Debug.Log("Collided with Floor.");

@@ -5,6 +5,7 @@ public class LaunchTracjectory : MonoBehaviour
 {
     public Vector2 launchVelocity = new Vector2(3f, 3f);
     public float ignoreTime = 0.5f;
+    public Collider2D platformCollider;
 
     private Rigidbody2D rb;
     private Collider2D objectCollider;
@@ -25,14 +26,16 @@ public class LaunchTracjectory : MonoBehaviour
 
             Collider2D playerCollider = collision.collider;
             Physics2D.IgnoreCollision(objectCollider, playerCollider, true);
+            Physics2D.IgnoreCollision(objectCollider, platformCollider, true);
             StartCoroutine(RestoreCollision(playerCollider));
+            StartCoroutine(RestoreCollision(platformCollider));
         }
     }
 
-    IEnumerator RestoreCollision(Collider2D playerCollider)
+    IEnumerator RestoreCollision(Collider2D otherCollider)
     {
         yield return new WaitForSeconds(ignoreTime);
 
-        Physics2D.IgnoreCollision(objectCollider, playerCollider, false);
+        Physics2D.IgnoreCollision(objectCollider, otherCollider, false);
     }
 }

@@ -7,6 +7,7 @@ TagManager:
   - Dog
   - FallingObject
   - Floor
+  - FloatingPlatform
   layers:
   - Default
   - TransparentFX

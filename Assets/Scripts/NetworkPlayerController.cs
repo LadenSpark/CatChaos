@@ -67,8 +67,7 @@ public class NetworkPlayerController : NetworkBehaviour
         // horizontalInput = Input.GetAxisRaw("Horizontal");
         // if (Input.GetButtonDown("Jump") && isGrounded)
         // {
-        //     rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+        //     rb.linearVelocsity = new Vector2(rb.linearVelocity.x, jumpForce);
         // }
     }
-   
 }
