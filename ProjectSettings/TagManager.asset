@@ -3,7 +3,11 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags: []
+  tags:
+  - Dog
+  - FallingObject
+  - Floor
+  - FloatingPlatform
   layers:
   - Default
   - TransparentFX
@@ -14,7 +18,7 @@ TagManager:
   - 
   - enemy
   - player
-  - 
+  - fallenObject
   - 
   - 
   - 
