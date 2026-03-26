@@ -42,7 +42,7 @@ public class FallenObjectController : MonoBehaviour
         rb.position = originalPosition;
         Debug.Log($"Object's position successfully reset.");
     }
-void HitDog() // This method is called when the object collides with the dog
+    void HitDog() // This method is called when the object collides with the dog
     {
         Debug.Log("Hit the dog! Good job!");
         

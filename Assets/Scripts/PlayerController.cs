@@ -33,6 +33,11 @@ public class PlayerController : MonoBehaviour
     private int currentTaps = 0;
     private float hangTimer;
 
+    // Knock Object Variables
+    public float interactionRange = 2f;
+    public LayerMask interactableLayer;
+    private bool isFacingRight;
+
     void Awake() 
     {
         rb = GetComponent<Rigidbody2D>();
@@ -50,13 +55,62 @@ public class PlayerController : MonoBehaviour
 
         HandleMovement();
         CheckLedgeDetection();
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            Debug.Log("gonna knock it!");
+            AttemptInteraction();
+        }
+    }
+
+    private void AttemptInteraction()
+    {
+        // 1. Determine direction based on localScale.x
+        float facingDirection = transform.localScale.x > 0 ? 1 : -1;
+        Vector2 rayDirection = Vector2.left * facingDirection;
+
+        // 2. OFFSET: Start the ray slightly in front of the player's center 
+        // This prevents the ray from hitting the Player's own collider.
+        Vector2 rayStart = (Vector2)transform.position + (rayDirection * 0.5f);
+
+        // 3. DEBUG: This line MUST point toward your object in the Scene View
+        Debug.DrawRay(rayStart, rayDirection * interactionRange, Color.green, 1.0f);
+
+        // 4. Perform the Raycast
+        RaycastHit2D hit = Physics2D.Raycast(rayStart, rayDirection, interactionRange, interactableLayer);
+
+        if (hit.collider != null)
+        {
+            FallenObject fallenItem = hit.collider.GetComponent<FallenObject>();
+            
+            if (fallenItem != null)
+            {
+                Debug.Log("Hit: " + hit.collider.name);
+                fallenItem.KnockOff(rayDirection);
+            }
+        }
+        else
+        {
+            // If you see the Green line touching the object but get this message:
+            // Check your LayerMask and Collider2D types!
+            Debug.Log("No interactable object in range.");
+        }
     }
 
     private void HandleMovement()
     {
+        
         float moveInput = 0;
         if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) moveInput = -1;
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) moveInput = 1;
+        if (moveInput > 0 && !isFacingRight)
+        {
+            Flip();
+        }
+        else if (moveInput < 0 && isFacingRight)
+        {
+            Flip();
+        }
 
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
 
@@ -127,7 +181,6 @@ public class PlayerController : MonoBehaviour
     private void ExecuteClimb()
     {
         isHanging = false;
-        rb.isKinematic = false; 
         rb.gravityScale = 3f; // Restore gravity
 
         // Calculate landing position: Current ledge position + offset
@@ -152,7 +205,7 @@ public class PlayerController : MonoBehaviour
     {
         // This handles the 'Failure' case (falling off)
         isHanging = false;
-        rb.isKinematic = false;
+        rb.bodyType = RigidbodyType2D.Dynamic;
         rb.gravityScale = 3f; 
         
         if (!climbed)
@@ -161,6 +214,17 @@ public class PlayerController : MonoBehaviour
             // Optional: push the player slightly away from the wall so they don't re-grab immediately
             rb.linearVelocity = new Vector2(-transform.localScale.x * 2f, 0);
         }
+    }
+
+    private void Flip()
+    {
+        // Switch the way the player is labelled as facing
+        isFacingRight = !isFacingRight;
+
+        // Multiply the player's x local scale by -1
+        Vector3 theScale = transform.localScale;
+        theScale.x *= -1;
+        transform.localScale = theScale;
     }
 
     // private void HandleHanging()

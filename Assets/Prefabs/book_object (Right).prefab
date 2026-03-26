@@ -133,8 +133,7 @@ GameObject:
   - component: {fileID: 3410840306175236616}
   - component: {fileID: 6147522231795403233}
   - component: {fileID: 2343068436143412564}
-  - component: {fileID: 8255784730507454472}
-  - component: {fileID: 7645130575934340191}
+  - component: {fileID: 7734486105591181471}
   m_Layer: 9
   m_Name: book_object (Right)
   m_TagString: FallingObject
@@ -232,7 +231,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &8255784730507454472
+--- !u!114 &7734486105591181471
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -241,21 +240,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3167359211726482523}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5564574c18ccfa049b6f08ddea0c2b34, type: 3}
+  m_Script: {fileID: 11500000, guid: 6a96be08f1ce4e549b6b2a6487400ce1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FallenObjectController
---- !u!114 &7645130575934340191
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3167359211726482523}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c42eeda3d4938d14387fd6b3396f3532, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LaunchTrajectory
-  launchVelocity: {x: 1, y: -2}
-  ignoreTime: 0.5
-  platformCollider: {fileID: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::FallenObject
+  launchPower: {x: 5, y: 2}
+  ignorePlatformTime: 0.5
+  platformToIgnore: {fileID: 0}
