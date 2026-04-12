@@ -43,6 +43,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Singleplayerwooper Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 5334329665036383071, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 7088760878238229418, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 3792118153
@@ -53,7 +57,7 @@ PrefabInstance:
       objectReference: {fileID: 9099946698241211657, guid: 28a1388541a942f4ebccbfb336f9c415, type: 3}
     - target: {fileID: 7914253747764678068, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: m_SortingOrder
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8604797167915631399, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: m_LocalScale.x
@@ -150,13 +154,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   climbOffset: {x: 0.5, y: 1.5}
-  moveSpeed: 3
-  jumpForce: 7
+  moveSpeed: 1.4
+  jumpForce: 8
   groundCheck: {fileID: 8837000929362382227}
   groundCheckRadius: 0.1
-  groundLayer:
+  whatIsGround:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 1032
   ledgeDetector: {fileID: 8940704150161302736}
   ledgeLayer:
     serializedVersion: 2
@@ -165,7 +169,10 @@ MonoBehaviour:
   luckMagnitude: 0.2
   tapsRequired: 5
   hangMaxTime: 2
-  myCollider: {fileID: 6535775528405411238}
+  joystickIdentifier: Joystick0
+  jumpButtonIdentifier: buttonJump
+  interactButtonIdentifier: buttonInteract
+  isFacingRight: 1
   interactionRange: 5
   interactableLayer:
     serializedVersion: 2
