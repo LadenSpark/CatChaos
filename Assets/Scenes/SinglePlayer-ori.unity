@@ -794,8 +794,8 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.17567568
-    y: 0.125
+    x: -0.21621622
+    y: -0.20833334
     width: 0.6486487
     height: 0.75
   near clip plane: 0.3
@@ -869,6 +869,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3babade30d3e18a45bd8585a5fe3912d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TouchControlsKit.GuiCamera
+--- !u!1 &538083897 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1276956049911796887, guid: 4b813cefc27193c4abdf037153766ed9, type: 3}
+  m_PrefabInstance: {fileID: 1836397668}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &538083900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 538083897}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23d00622353145f40ae3d6fc5bea6982, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RandomRuntimeShatter
+  approximatePieces: 20
+  explosionForce: 4
+  physicsMaterial: {fileID: 0}
 --- !u!1 &604289787 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8754558267583704051, guid: 6c3785c8382cad24eb7819837d9051aa, type: 3}
@@ -2093,7 +2113,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3167359211726482523, guid: 4b813cefc27193c4abdf037153766ed9, type: 3}
       propertyPath: m_Name
-      value: book_object (Right)
+      value: Vase
       objectReference: {fileID: 0}
     - target: {fileID: 3410840306175236616, guid: 4b813cefc27193c4abdf037153766ed9, type: 3}
       propertyPath: m_LocalScale.x
@@ -2202,7 +2222,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1276956049911796887, guid: 4b813cefc27193c4abdf037153766ed9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 538083900}
   m_SourcePrefab: {fileID: 100100000, guid: 4b813cefc27193c4abdf037153766ed9, type: 3}
 --- !u!1 &1913853943
 GameObject:
