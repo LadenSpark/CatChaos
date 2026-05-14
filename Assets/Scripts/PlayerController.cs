@@ -66,6 +66,8 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Q) || TCKInput.GetButtonDown(interactButtonIdentifier))
         {
+            catAnim.SetTrigger("catSwipe");
+            catAnim.ResetTrigger("catSwipe");
             AttemptInteraction();
         }
     }
