@@ -102,11 +102,11 @@ PrefabInstance:
       objectReference: {fileID: 2974397684917235467, guid: 0000000000000000d000000000000000, type: 0}
     - target: {fileID: 7824207692743427381, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.91
+      value: 3.14
       objectReference: {fileID: 0}
     - target: {fileID: 7824207692743427381, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.92
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8532539469777467383, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       propertyPath: m_Enabled
@@ -142,6 +142,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8947117853943074439, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4231342463350575428}
+    - targetCorrespondingSourceObject: {fileID: 8947117853943074439, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4982296490113179326}
   m_SourcePrefab: {fileID: 100100000, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
 --- !u!1 &2700683736988607184 stripped
 GameObject:
@@ -327,3 +330,15 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &4982296490113179326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2700683736988607184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c6704599ef9fb247b8b49727f7b3f49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DogHitboxTrigger
