@@ -33,6 +33,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool isFacingRight = true; 
 
     private Rigidbody2D rb;
+    private Animator catAnim;
     private bool isGrounded;
     private bool isHanging = false;
     private bool hasAttemptedHang = false; 
@@ -45,6 +46,7 @@ public class PlayerController : MonoBehaviour
 
     void Awake() 
     {
+        catAnim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         rb.freezeRotation = true; 
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
@@ -76,9 +78,19 @@ public class PlayerController : MonoBehaviour
         // 2. Fallback to Keyboard if Joystick is idle
         if (Mathf.Abs(moveInput) < 0.01f)
         {
-            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) moveInput = -1;
-            else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) moveInput = 1;
+            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+            {
+                catAnim.SetBool("walk", true);
+                moveInput = -1;
+            }
+            else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+            {
+                catAnim.SetBool("walk", true);
+                moveInput = 1;
+            }
+            else catAnim.SetBool("walk", false);
         }
+        else catAnim.SetBool("walk", true);
 
         // 3. Flip Logic (Ass-Backward Fix)
         if (moveInput > 0.1f && !isFacingRight) Flip();
@@ -88,12 +100,17 @@ public class PlayerController : MonoBehaviour
 
         // 4. Ground Check (Multi-Layer)
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, whatIsGround);
-        if (isGrounded) hasAttemptedHang = false;
+        if (isGrounded)
+        {
+            catAnim.SetBool("Catjump", false);
+            hasAttemptedHang = false;
+        }
+        else catAnim.SetBool("Catjump", true);
 
-        // 5. Jump (Velocity reset for height consistency)
-        bool jumpPressed = Input.GetKeyDown(KeyCode.Space) || 
-                           Input.GetKeyDown(KeyCode.W) || 
-                           TCKInput.GetButtonDown(jumpButtonIdentifier);
+            // 5. Jump (Velocity reset for height consistency)
+            bool jumpPressed = Input.GetKeyDown(KeyCode.Space) ||
+                               Input.GetKeyDown(KeyCode.W) ||
+                               TCKInput.GetButtonDown(jumpButtonIdentifier);
 
         if (jumpPressed && isGrounded)
         {

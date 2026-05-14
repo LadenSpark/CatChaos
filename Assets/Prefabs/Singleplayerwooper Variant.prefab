@@ -39,6 +39,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 19143332779195586, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
+      propertyPath: m_Icon
+      value: 
+      objectReference: {fileID: 2974397684917235467, guid: 0000000000000000d000000000000000, type: 0}
     - target: {fileID: 5334329665036383071, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: m_Name
       value: Singleplayerwooper Variant
@@ -47,6 +51,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 5334329665036383071, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     - target: {fileID: 7088760878238229418, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 3792118153
@@ -54,7 +62,7 @@ PrefabInstance:
     - target: {fileID: 7914253747764678068, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 9099946698241211657, guid: 28a1388541a942f4ebccbfb336f9c415, type: 3}
+      objectReference: {fileID: 4846749676772436633, guid: 751deaf13a23b7f46a22e8c14b603575, type: 3}
     - target: {fileID: 7914253747764678068, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: m_SortingOrder
       value: 1
@@ -117,7 +125,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8758980194119827477, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.07
+      value: -4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -215,13 +223,13 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 7.39, y: 6.12}
+    oldSize: {x: 10.53, y: 8.48}
     newSize: {x: 2.45, y: 4.63}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 6.92, y: 6.12}
+  m_Size: {x: 10, y: 8}
   m_EdgeRadius: 0
 --- !u!95 &3087452689151218673
 Animator:
