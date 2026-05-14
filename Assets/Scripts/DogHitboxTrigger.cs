@@ -8,7 +8,7 @@ public class DogHitboxTrigger : MonoBehaviour
 
     void Awake()
     {
-        dogAnim = GetComponent<Animator>();
+        dogAnim = GetComponent<Animator>(); //need this for the dog hit animation
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -21,8 +21,8 @@ public class DogHitboxTrigger : MonoBehaviour
             Instantiate(Resources.Load("BonkText"), transform.position, Quaternion.identity);
 
 
-            dogAnim.SetTrigger("dogHit");
-            dogAnim.ResetTrigger("dogHit");
+            dogAnim.SetTrigger("dogHit");   //play the animation fo the dog being hit
+            //dogAnim.ResetTrigger("dogHit"); //didn't need this on cat, might not need it here
 
             //Add score with scoremanager, NEED TO CREATE
         }
