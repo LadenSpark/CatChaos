@@ -1,7 +1,11 @@
 using UnityEngine;
 using Unity.Netcode;
 
-public class EnemyPatrol : NetworkBehaviour
+//this script is a duplicate of the "enemy Patrol" script used on the dog.
+//the reason for its existence is that the dog version of the script needs a variable that throws an error if it's on the human version.
+//this entire script will be depricated when Jason finishes his human script, and can be deleted and removed.
+
+public class EnemyPatrolHumanTemp : NetworkBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float speed = 3f;
@@ -15,21 +19,17 @@ public class EnemyPatrol : NetworkBehaviour
 
 
     private Rigidbody2D rb;
-    private Animator dogAnim;
-
     
+
     void Awake()
     {
-        dogAnim = GetComponent<Animator>(); //need this for the dog hit animation
         rb = GetComponent<Rigidbody2D>();
 
     }// => 
 
     void FixedUpdate()
     {
-        if (dogAnim.GetBool("dogHit") == false) //stops dog from moving when it gets hit. slides to a stop currently.
-        {
-            // 1. Move the enemy
+           // 1. Move the enemy
             float horizontalMove = movingRight ? speed : -speed;
             rb.linearVelocity = new Vector2(horizontalMove, rb.linearVelocity.y);
 
@@ -42,7 +42,7 @@ public class EnemyPatrol : NetworkBehaviour
             {
                 Flip();
             }
-        }
+        
     }
 
     private void Flip()

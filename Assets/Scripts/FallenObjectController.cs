@@ -26,6 +26,7 @@ public class FallenObjectController : MonoBehaviour
         {
             Debug.Log("Collided with Dog.");
             HitDog(); // Call the method to add points or for hitting the dog
+            ReturnObject();
         }
     }
 

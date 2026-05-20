@@ -74,6 +74,7 @@ public class FallenObject : MonoBehaviour
         {
             Debug.Log("Hit the dog! Good job!");
             // You can call a ScoreManager here
+            ResetObject();
         }
     }
 

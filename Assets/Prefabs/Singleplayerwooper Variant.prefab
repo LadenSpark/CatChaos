@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8940704150161302736}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: LedgeCheck
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -162,8 +162,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   climbOffset: {x: 0.5, y: 1.5}
-  moveSpeed: 1.4
-  jumpForce: 8
+  moveSpeed: 4
+  jumpForce: 10
   groundCheck: {fileID: 8837000929362382227}
   groundCheckRadius: 0.1
   whatIsGround:

@@ -16,6 +16,10 @@ PrefabInstance:
       propertyPath: m_Icon
       value: 
       objectReference: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
+    - target: {fileID: 2305510327188540077, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 3141870684696392342, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3
@@ -38,15 +42,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5174648085645105218, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4.74
+      value: -8.62
       objectReference: {fileID: 0}
     - target: {fileID: 5174648085645105218, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.76
+      value: -5.73
       objectReference: {fileID: 0}
     - target: {fileID: 5174648085645105218, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.05004
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5174648085645105218, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       propertyPath: m_LocalRotation.w
@@ -100,6 +104,10 @@ PrefabInstance:
       propertyPath: m_Icon
       value: 
       objectReference: {fileID: 2974397684917235467, guid: 0000000000000000d000000000000000, type: 0}
+    - target: {fileID: 6929394424819469881, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 7824207692743427381, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3.14
@@ -120,6 +128,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dog Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 8947117853943074439, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
+      propertyPath: m_TagString
+      value: Dog
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 4360346832791079763, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
     - {fileID: 2456264118851995134, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
@@ -132,6 +144,9 @@ PrefabInstance:
       addedObject: {fileID: 6582774501205357328}
     - targetCorrespondingSourceObject: {fileID: 8947117853943074439, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       insertIndex: 2
+      addedObject: {fileID: 4982296490113179326}
+    - targetCorrespondingSourceObject: {fileID: 8947117853943074439, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
+      insertIndex: 3
       addedObject: {fileID: 6515596281283202301}
     - targetCorrespondingSourceObject: {fileID: 8947117853943074439, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       insertIndex: -1
@@ -144,7 +159,7 @@ PrefabInstance:
       addedObject: {fileID: 4231342463350575428}
     - targetCorrespondingSourceObject: {fileID: 8947117853943074439, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4982296490113179326}
+      addedObject: {fileID: -8723875132924754068}
   m_SourcePrefab: {fileID: 100100000, guid: fcf0b6d64ba338749a43b522f30b89c1, type: 3}
 --- !u!1 &2700683736988607184 stripped
 GameObject:
@@ -210,6 +225,18 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &4982296490113179326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2700683736988607184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c6704599ef9fb247b8b49727f7b3f49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DogHitboxTrigger
 --- !u!114 &6515596281283202301
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -223,7 +250,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
   GlobalObjectIdHash: 24113976
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 2148575490
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
@@ -330,15 +357,49 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &4982296490113179326
-MonoBehaviour:
+--- !u!61 &-8723875132924754068
+BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2700683736988607184}
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c6704599ef9fb247b8b49727f7b3f49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DogHitboxTrigger
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 3}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 6.96, y: 6.06}
+    newSize: {x: 5.12, y: 3.84}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 8, y: 3}
+  m_EdgeRadius: 0

@@ -1,14 +1,16 @@
 using JetBrains.Annotations;
 using UnityEngine;
 
+
+
 public class DogHitboxTrigger : MonoBehaviour
 {
-
     private Animator dogAnim;
 
     void Awake()
     {
         dogAnim = GetComponent<Animator>(); //need this for the dog hit animation
+        dogAnim.SetBool("dogHit", false);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -18,13 +20,18 @@ public class DogHitboxTrigger : MonoBehaviour
         {
             // Onomatopoeia text graphic for a dog getting hit by a falling object
             Debug.Log("Dog hit by a falling object!");
-            Instantiate(Resources.Load("BonkText"), transform.position, Quaternion.identity);
+            //Instantiate(Resources.Load("BonkText"), transform.position, Quaternion.identity);
 
-
-            dogAnim.SetTrigger("dogHit");   //play the animation fo the dog being hit
-            //dogAnim.ResetTrigger("dogHit"); //didn't need this on cat, might not need it here
-
+            //isAnimPlaying = true;
+            dogAnim.SetBool("dogHit", true);
             //Add score with scoremanager, NEED TO CREATE
         }
     }
+
+    private void DogHitConclusion() //called by the animation when the swipe ends, necessary to lock in place for the duration of the swipe
+    {
+        dogAnim.SetBool("dogHit", false);
+        
+    }
+
 }

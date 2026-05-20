@@ -51,6 +51,7 @@ public class PlayerController : MonoBehaviour
         rb.freezeRotation = true; 
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         defaultGravity = rb.gravityScale; // Captures original jump physics
+        catAnim.SetBool("catSwipe", false);
     }
 
     void Update()
@@ -61,24 +62,30 @@ public class PlayerController : MonoBehaviour
             return; 
         }
 
+        if (catAnim.GetBool("catSwipe") == false) //don't let the cat move if it's swiping. if it has momentum, it will slide.
         HandleMovement();
         CheckLedgeDetection();
 
+        if (isGrounded && catAnim.GetBool("catSwipe") == false) //don't swipe if we're swiping already or airborne 
         if (Input.GetKeyDown(KeyCode.Q) || TCKInput.GetButtonDown(interactButtonIdentifier))
         {
-            catAnim.SetTrigger("catSwipe");
-            //catAnim.ResetTrigger("catSwipe"); //unity website suggests this, but it breaks the game. might not need it, works fine without.
+            catAnim.SetBool("catSwipe", true);
             AttemptInteraction();
         }
     }
 
+    private void CatSwipeConclusion() //called by the animation when the swipe ends, necessary to lock in place for the duration of the swipe
+    {
+        catAnim.SetBool("catSwipe", false);
+    }
+
     private void HandleMovement()
     {
-        // 1. Prioritize Joystick
-        float moveInput = TCKInput.GetAxis(joystickIdentifier, EAxisType.Horizontal);
+            // 1. Prioritize Joystick
+            float moveInput = TCKInput.GetAxis(joystickIdentifier, EAxisType.Horizontal);
 
-        // 2. Fallback to Keyboard if Joystick is idle
-        if (Mathf.Abs(moveInput) < 0.01f)
+            // 2. Fallback to Keyboard if Joystick is idle
+            if (Mathf.Abs(moveInput) < 0.01f)
         {
             if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
             {
@@ -92,32 +99,32 @@ public class PlayerController : MonoBehaviour
             }
             else catAnim.SetBool("walk", false);
         }
-        else catAnim.SetBool("walk", true);
+            else catAnim.SetBool("walk", true);
 
-        // 3. Flip Logic (Ass-Backward Fix)
-        if (moveInput > 0.1f && !isFacingRight) Flip();
-        else if (moveInput < -0.1f && isFacingRight) Flip();
+            // 3. Flip Logic (Ass-Backward Fix)
+            if (moveInput > 0.1f && !isFacingRight) Flip();
+            else if (moveInput < -0.1f && isFacingRight) Flip();
 
-        rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
+            rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
 
-        // 4. Ground Check (Multi-Layer)
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, whatIsGround);
-        if (isGrounded)
-        {
-            catAnim.SetBool("Catjump", false);
-            hasAttemptedHang = false;
-        }
-        else catAnim.SetBool("Catjump", true);
+            // 4. Ground Check (Multi-Layer)
+            isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, whatIsGround);
+            if (isGrounded)
+            {
+                catAnim.SetBool("Catjump", false);
+                hasAttemptedHang = false;
+            }
+            else catAnim.SetBool("Catjump", true);
 
             // 5. Jump (Velocity reset for height consistency)
             bool jumpPressed = Input.GetKeyDown(KeyCode.Space) ||
                                Input.GetKeyDown(KeyCode.W) ||
                                TCKInput.GetButtonDown(jumpButtonIdentifier);
-
-        if (jumpPressed && isGrounded)
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-        }
+                
+            if (jumpPressed && isGrounded)
+            {
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            }
     }
 
     private void AttemptInteraction()
