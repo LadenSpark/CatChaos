@@ -48,8 +48,7 @@ public class LaunchTrajectory : MonoBehaviour
     public Vector2 launchVelocity = new Vector2(3f, 3f);
     public float ignoreTime = 0.5f;
     public Collider2D platformCollider;
-    public string interactButton = "Fire1"; // Assigned button (e.g., Left Click/Ctrl)
-
+    
     private Rigidbody2D rb;
     private Collider2D objectCollider;
     private bool isPlayerNearby = false;
@@ -68,7 +67,7 @@ public class LaunchTrajectory : MonoBehaviour
     void Update()
     {
         // Check for button press while player is touching/near the object
-        if (isPlayerNearby && Input.GetButtonDown(interactButton))
+        if (isPlayerNearby && Input.GetKeyDown(KeyCode.Q))
         {
             LaunchObject();
         }
@@ -79,7 +78,12 @@ public class LaunchTrajectory : MonoBehaviour
         Debug.Log("Object knocked!");
         
         // 1. Make it physical so it can fall
-        rb.bodyType = RigidbodyType2D.Dynamic; 
+        rb.bodyType = RigidbodyType2D.Dynamic;
+
+        // 1.1 enable gravity so that the object begins to fall instead of sitting in place above the shelf.
+        // gravity is disabled when the object is reset in the FallenObject script.
+        // we set it here to keep physics calculations together.
+        rb.gravityScale = 2;
 
         // 2. Ignore the platform so it falls through
         Physics2D.IgnoreCollision(objectCollider, platformCollider, true);
@@ -92,18 +96,18 @@ public class LaunchTrajectory : MonoBehaviour
     }
 
     // Trigger detection instead of Collision so the player can "stand" near it
-    void OnCollisionEnter2D(Collision2D collision)
+    void OnTriggerEnter2D(Collider2D other)
     {
-        if (collision.gameObject.CompareTag("Player"))
+        if (other.gameObject.CompareTag("Player"))
         {
             isPlayerNearby = true;
-            savedPlayerCollider = collision.collider;
+            savedPlayerCollider = other.GetComponent<Collider2D>();
         }
     }
 
-    void OnCollisionExit2D(Collision2D collision)
+    void OnTriggerExit2D(Collider2D other)
     {
-        if (collision.gameObject.CompareTag("Player"))
+        if (other.gameObject.CompareTag("Player"))
         {
             isPlayerNearby = false;
         }

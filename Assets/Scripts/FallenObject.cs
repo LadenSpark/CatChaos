@@ -74,11 +74,13 @@ public class FallenObject : MonoBehaviour
         {
             Debug.Log("Hit the dog! Good job!");
             // You can call a ScoreManager here
+            ResetObject();
         }
     }
 
     public void ResetObject()
     {
+        rb.gravityScale = 0;
         isLaunched = false;
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.linearVelocity = Vector2.zero;
