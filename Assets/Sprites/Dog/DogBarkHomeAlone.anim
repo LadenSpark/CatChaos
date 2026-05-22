@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: DogWalking
+  m_Name: DogBarkHomeAlone
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -21,11 +21,9 @@ AnimationClip:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: -7608562584810712233, guid: 325477c933eef9b48ae2d503bf9bc8d5, type: 3}
-    - time: 0.083333336
-      value: {fileID: 6937817954938267909, guid: 63d2f263ad733df449a8251c411cc8d5, type: 3}
-    - time: 0.16666667
-      value: {fileID: -6470460504253458178, guid: a81b07863d414dd4f9cc46158460159a, type: 3}
+      value: {fileID: 29533708575904803, guid: 4726058c2ecd38c43a42f25bb6e24e86, type: 3}
+    - time: 0.5
+      value: {fileID: 29533708575904803, guid: 4726058c2ecd38c43a42f25bb6e24e86, type: 3}
     attribute: m_Sprite
     path: 
     classID: 212
@@ -48,15 +46,14 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     pptrCurveMapping:
-    - {fileID: -7608562584810712233, guid: 325477c933eef9b48ae2d503bf9bc8d5, type: 3}
-    - {fileID: 6937817954938267909, guid: 63d2f263ad733df449a8251c411cc8d5, type: 3}
-    - {fileID: -6470460504253458178, guid: a81b07863d414dd4f9cc46158460159a, type: 3}
+    - {fileID: 29533708575904803, guid: 4726058c2ecd38c43a42f25bb6e24e86, type: 3}
+    - {fileID: 29533708575904803, guid: 4726058c2ecd38c43a42f25bb6e24e86, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.25
+    m_StopTime: 0.5833333
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -75,4 +72,11 @@ AnimationClip:
   m_EulerEditorCurves: []
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
-  m_Events: []
+  m_Events:
+  - time: 0.5
+    functionName: DogBarkConclusion
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0

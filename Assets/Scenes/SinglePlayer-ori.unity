@@ -852,11 +852,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2197834410630083605, guid: 26623d7f57d299040b3596a6b1c7da9f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -8.62
+      value: 5.19
       objectReference: {fileID: 0}
     - target: {fileID: 2197834410630083605, guid: 26623d7f57d299040b3596a6b1c7da9f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -5.73
+      value: -6.33
       objectReference: {fileID: 0}
     - target: {fileID: 2197834410630083605, guid: 26623d7f57d299040b3596a6b1c7da9f, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1019,9 +1019,9 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: -0.42884803
+    x: -0.38397792
     y: -0.5671937
-    width: 1.8586642
+    width: 1.7679558
     height: 2.1343875
   near clip plane: 0.3
   far clip plane: 1000
