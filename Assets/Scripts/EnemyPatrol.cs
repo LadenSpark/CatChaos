@@ -27,7 +27,7 @@ public class EnemyPatrol : NetworkBehaviour
 
     void FixedUpdate()
     {
-        if (dogAnim.GetBool("dogHit") == false && dogAnim.GetBool("dogBark") == false) //only calculate movement if dog is not barking or hit
+        if (dogAnim.GetBool("dogHit") == false) //stops dog from moving when it gets hit. slides to a stop currently.
         {
             // 1. Move the enemy
             float horizontalMove = movingRight ? speed : -speed;
@@ -43,9 +43,6 @@ public class EnemyPatrol : NetworkBehaviour
                 Flip();
             }
         }
-        else if (dogAnim.GetBool("dogHit") == false) rb.linearVelocity = new Vector2(0, 0);  //forces dog to freeze in place, prevents sliding. 
-        else if (dogAnim.GetBool("dogBark") == false) rb.linearVelocity = new Vector2(0, 0);
-        else Debug.Log("a");
     }
 
     private void Flip()
