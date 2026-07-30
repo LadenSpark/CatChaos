@@ -102,11 +102,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1048820350483106151}
+  - component: {fileID: 5151279005267920755}
   - component: {fileID: 5605131456839831973}
   - component: {fileID: 2556849288683454936}
   - component: {fileID: 1879475007402837265}
-  - component: {fileID: 5330335302342660497}
-  - component: {fileID: 7393062178480795438}
   m_Layer: 0
   m_Name: Carlos el Blanco - Anthony_0
   m_TagString: Untagged
@@ -132,6 +131,37 @@ Transform:
   - {fileID: 5987123588732940060}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5151279005267920755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8754558267583704051}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f6782f6cbb172a4094a4bf52fc85c50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Human
+  moveSpeed: 3
+  idleChance: 0.224
+  minIdleTime: 4
+  maxIdleTime: 4
+  ledgeCheck: {fileID: 2625843635179620486}
+  wallCheck: {fileID: 8360179542637546001}
+  checkRadius: 0.2
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  catTransform: {fileID: 0}
+  viewDistance: 10
+  visionLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  ladderLocations: []
+  ladderBottomHeightY: -2
+  ladderMidHeightY: 1.5
+  ladderTopHeightY: 5
 --- !u!212 &5605131456839831973
 SpriteRenderer:
   serializedVersion: 2
@@ -259,49 +289,3 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3.1407669, y: 3.87}
   m_EdgeRadius: 0
---- !u!114 &5330335302342660497
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8754558267583704051}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 351992608
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
---- !u!114 &7393062178480795438
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8754558267583704051}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f6e0058e2d72bf45a6b2e4ccaebdc23, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyPatrol
-  ShowTopMostFoldoutHeaderGroup: 1
-  speed: 3
-  movingRight: 1
-  detectionDistance: 0.5
-  wallCheck: {fileID: 8360179542637546001}
-  ledgeCheck: {fileID: 2625843635179620486}
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 8
