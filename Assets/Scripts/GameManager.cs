@@ -1,121 +1,158 @@
 using UnityEngine;
-using UnityEngine.UI;
+using Unity.Netcode;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI; // Required for the Slider
+using TMPro; // Required for TextMeshPro
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; }
+    public static GameManager _instance;
+    public static GameManager Instance => _instance;
 
-    [Header("Risk System")]
-    public float maxRisk = 10f;
-    private float currentRisk = 0f;
-    
-    [Tooltip("Drag your UI Slider here for the Risk Meter")]
-    public Slider riskMeterUI; 
-
-    [Header("References")]
-    [Tooltip("Drag the Human GameObject here so we can check their facing direction.")]
-    public Human humanScript;
-
-        // [Header("Prefabs")]
     [SerializeField] private GameObject singlePlayerPrefab;
     // [SerializeField] private GameObject networkPlayerPrefab;
 
-    // [Header("Spawn Settings")]
     [SerializeField] private Transform spawnPoint;
     // [SerializeField] private Transform playerTwoSpawnPoint;
 
-    void Awake()
-    {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+    [Header("Chaos / Risk Settings")]
+    public float chaosLevel = 0f;
+    public float maxChaos = 10f; 
 
-        Instantiate(singlePlayerPrefab, spawnPoint.transform.position, Quaternion.identity);
+    [Header("Score Settings")]
+    public int currentScore = 0;
+
+    [Header("UI Elements")]
+    [Tooltip("Slider to visually represent the Risk/Chaos level.")]
+    public Slider chaosMeterUI; 
+    [Tooltip("Text to show the numerical Chaos/Risk level.")]
+    public TextMeshProUGUI chaosTextUI; 
+    [Tooltip("Text to show the player's score.")]
+    public TextMeshProUGUI scoreTextUI;
+
+    private void Awake()
+    {
+        // Simple Singleton pattern for easy access
+        if (_instance != null && _instance != this)
+        {
+            Destroy(this.gameObject);
+        }
+        else
+        {
+            _instance = this;
+        }
+
+        if (singlePlayerPrefab != null && spawnPoint != null)
+        {
+            Instantiate(singlePlayerPrefab, spawnPoint.transform.position, Quaternion.identity);
+        }
     }
 
-    void Start()
+    private void Start()
     {
-        UpdateRiskUI();
+        // Update the UI immediately when the game starts
+        UpdateUI();
     }
 
     /// <summary>
-    /// Called by FallenObject.cs when it hits the ground.
+    /// Calculates directional risk based on the Human's position and facing direction.
     /// </summary>
-    public void AddRisk(Vector3 messPosition)
+    public void AddChaosFromMess(Vector3 messPosition)
     {
-        float riskToAdd = 1f; // Default risk if facing away
+        float riskToAdd = 1f; // Base risk
 
-        if (humanScript != null)
+        if (Human.Instance != null)
         {
-            // Figure out which direction the mess is relative to the human (positive = right, negative = left)
-            float directionToMess = messPosition.x - humanScript.transform.position.x;
-            
-            // Get the human's current facing direction from their localScale X (1 = right, -1 = left)
-            float humanFacingDirection = humanScript.transform.localScale.x;
+            float humanFacing = Mathf.Sign(Human.Instance.transform.localScale.x);
+            float directionToMess = Mathf.Sign(messPosition.x - Human.Instance.transform.position.x);
 
-            // If the signs match (both positive or both negative), the human is facing the mess!
-            if (Mathf.Sign(directionToMess) == Mathf.Sign(humanFacingDirection))
+            if (humanFacing == directionToMess)
             {
-                Debug.Log("Human saw that! Double risk!");
-                riskToAdd = 2f;
-            }
-            else
-            {
-                Debug.Log("Human was facing away. Phew, only 1 risk.");
+                riskToAdd = 2f; // Double risk if they were looking that way!
             }
         }
 
-        // Add risk and clamp it to our max of 10
-        currentRisk += riskToAdd;
-        currentRisk = Mathf.Clamp(currentRisk, 0, maxRisk);
-        UpdateRiskUI();
+        AddChaos(riskToAdd);
+    }
 
-        // Trigger the human if we hit 10
-        if (currentRisk >= maxRisk)
+    /// <summary>
+    /// Increases chaos level, forwards risk to Human, and updates UI.
+    /// </summary>
+    public void AddChaos(float amount)
+    {
+        chaosLevel = Mathf.Clamp(chaosLevel + amount, 0f, maxChaos);
+        Debug.Log($"Chaos Level Increased! Current Chaos: {chaosLevel}");
+
+        if (Human.Instance != null)
         {
-            Debug.Log("Risk meter hit 10! The human is coming for you!");
-            humanScript.TriggerLadderSearch();
-            ResetRisk(); // Resets the meter while they search
+            Human.Instance.riskMeter = this.chaosLevel;
         }
+        
+        UpdateUI();
     }
 
-    public void ResetRisk()
+    /// <summary>
+    /// Called when the human climbs randomly due to time. Reduces chaos by half (rounded down).
+    /// </summary>
+    public void ReduceChaosByHalf()
     {
-        currentRisk = 0f;
-        UpdateRiskUI();
-    }
-
-    private void UpdateRiskUI()
-    {
-        if (riskMeterUI != null)
+        float reduction = Mathf.Floor(chaosLevel / 2f);
+        chaosLevel -= reduction;
+        Debug.Log($"Random patrol finished! Chaos reduced by {reduction}. Current Chaos: {chaosLevel}");
+        
+        if (Human.Instance != null)
         {
-            riskMeterUI.value = currentRisk / maxRisk;
+            Human.Instance.riskMeter = this.chaosLevel;
+        }
+        
+        UpdateUI();
+    }
+
+    /// <summary>
+    /// Called when the human completes a full forced climb, resetting the meter.
+    /// </summary>
+    public void ResetChaos()
+    {
+        chaosLevel = 0f;
+        Debug.Log("Chaos Level Reset to 0.");
+        
+        if (Human.Instance != null)
+        {
+            Human.Instance.riskMeter = this.chaosLevel;
+        }
+        
+        UpdateUI();
+    }
+
+    /// <summary>
+    /// Adds points to the player's score and updates the UI.
+    /// </summary>
+    public void AddScore(int points)
+    {
+        currentScore += points;
+        Debug.Log($"Scored {points} points! Total Score: {currentScore}");
+        UpdateUI();
+    }
+
+    /// <summary>
+    /// Refreshes all assigned UI elements to match current variables.
+    /// </summary>
+    private void UpdateUI()
+    {
+        if (chaosMeterUI != null)
+        {
+            chaosMeterUI.maxValue = maxChaos;
+            chaosMeterUI.value = chaosLevel;
+        }
+
+        if (chaosTextUI != null)
+        {
+            chaosTextUI.text = $"Chaos: {chaosLevel} / {maxChaos}";
+        }
+
+        if (scoreTextUI != null)
+        {
+            scoreTextUI.text = $"Score: {currentScore}";
         }
     }
 }
-// Legacy
-// using UnityEngine;
-// using Unity.Netcode;
-// using UnityEngine.SceneManagement;
-
-// public class GameManager : MonoBehaviour
-// {
-//     public static GameManager _instance;
-
-
-
-//     private void Awake()
-//     {
-//         // Simple Singleton pattern for easy access
-//         if (_instance != null && _instance != this)
-//         {
-//             Destroy(this.gameObject);
-//         }
-//         else
-//         {
-//             _instance = this;
-//         }
-
-//         Instantiate(singlePlayerPrefab, spawnPoint.transform.position, Quaternion.identity);
-//     }
-
-// }

@@ -10,6 +10,9 @@ TagManager:
   - catPaw
   - floor
   - dog
+  - Dog
+  - Floor
+  - mess
   layers:
   - Default
   - TransparentFX

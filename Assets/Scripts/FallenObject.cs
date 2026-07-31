@@ -1,31 +1,33 @@
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic; // Added for the List<>
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(SpriteRenderer), typeof(Collider2D))]
 public class FallenObject : MonoBehaviour
 {
     [Header("Scoring & Visuals")]
-    [Tooltip("Points awarded if this object hits the dog.")]
     public int dogHitPoints = 50;
-    
-    [Tooltip("The sprite this object turns into when it hits the floor.")]
     public Sprite messSprite;
-    
-    [Tooltip("How big the mess should be when it hits the floor (X, Y, Z).")]
     public Vector3 messScale = new Vector3(1f, 1f, 1f);
 
     [Header("Animations")]
-    [Tooltip("Animator trigger name when hitting the floor/becoming a mess.")]
     public string floorHitAnimTrigger = "HitFloor";
-    [Tooltip("Animator trigger name when hitting the dog.")]
     public string dogHitAnimTrigger = "HitDog";
-    [Tooltip("How long to wait before destroying the object after freezing on the dog.")]
-    public float dogDestroyDelay = 0.5f;
-
+    
     [Header("Fall & Tumble Settings")]
-    [Tooltip("How fast the object spins as it tips over the edge.")]
     public float tumbleSpin = 200f; 
+
+    [Header("Autonomous Respawn Settings")]
+    [Tooltip("How long the object stays a mess on the floor before fading out.")]
+    public float messDuration = 4.0f;
+    [Tooltip("How long the object freezes on the dog before fading out.")]
+    public float dogHitDuration = 0.5f;
+    [Tooltip("How long the fade-in and fade-out animations take.")]
+    public float fadeDuration = 1.5f;
+    [Tooltip("How long the shelf remains empty before the item begins fading back in.")]
+    public float emptyShelfDuration = 3.0f;
+    [Tooltip("How fast it blinks while fading in/out.")]
+    public float flashSpeed = 15f;
 
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -34,6 +36,19 @@ public class FallenObject : MonoBehaviour
     
     private bool hasLanded = false;
     private bool isLaunched = false;
+    
+    // Prevents the cat from swatting the item while it is fading in
+    [HideInInspector] public bool isSpawning = false;
+
+    // Saved starting states
+    private Sprite originalSprite;
+    private Vector3 originalScale;
+    private string originalTag;
+    private Vector3 originalPosition;
+    private Quaternion originalRotation;
+
+    // Track the active coroutine so the Human can interrupt it!
+    private Coroutine currentRespawnRoutine;
 
     void Start()
     {
@@ -42,42 +57,37 @@ public class FallenObject : MonoBehaviour
         myCollider = GetComponent<Collider2D>();
         anim = GetComponent<Animator>();
 
-        // Start as Kinematic so it rests peacefully on the shelf until the cat swats it
+        originalSprite = spriteRenderer.sprite;
+        originalScale = transform.localScale;
+        originalTag = gameObject.tag;
+        originalPosition = transform.position;
+        originalRotation = transform.rotation;
+
         rb.bodyType = RigidbodyType2D.Kinematic;
     }
 
-    /// <summary>
-    /// Called by CatController when swiped.
-    /// </summary>
     public void KnockOff(float catFacingDirectionX)
     {
-        if (isLaunched || hasLanded) return; 
+        if (isLaunched || hasLanded || isSpawning) return; 
         isLaunched = true;
         
-        // 1. Switch to Dynamic so gravity pulls it straight down naturally
         rb.bodyType = RigidbodyType2D.Dynamic;
         rb.linearVelocity = Vector2.zero; 
-
-        // 2. Apply a realistic tumble spin away from the cat's swipe direction
         rb.angularVelocity = -catFacingDirectionX * tumbleSpin;
 
-        // 3. Briefly ignore the platform it's sitting on so it doesn't get stuck
         StartCoroutine(FallThroughPlatformBriefly());
     }
 
     private IEnumerator FallThroughPlatformBriefly()
     {
-        // FIX 1: Use bounds.center so it calculates perfectly no matter where the sprite's pivot is
         Vector2 boxCenter = (Vector2)myCollider.bounds.center - new Vector2(0, myCollider.bounds.extents.y + 0.1f);
         Vector2 boxSize = new Vector2(myCollider.bounds.size.x * 0.8f, 0.2f);
         
-        // FIX 2: Use OverlapBoxAll to catch everything, preventing it from accidentally targeting itself!
         Collider2D[] hits = Physics2D.OverlapBoxAll(boxCenter, boxSize, 0f);
         List<Collider2D> ignoredShelves = new List<Collider2D>();
 
         foreach (Collider2D hit in hits)
         {
-            // If it found a solid object that isn't itself, the floor, or the dog... ignore it!
             if (hit != myCollider && !hit.isTrigger && !hit.CompareTag("floor") && !hit.CompareTag("dog"))
             {
                 Physics2D.IgnoreCollision(myCollider, hit, true);
@@ -85,10 +95,8 @@ public class FallenObject : MonoBehaviour
             }
         }
             
-        // Wait a fraction of a second to clear the shelf geometry
         yield return new WaitForSeconds(0.4f);
             
-        // Turn collisions back on in case we need them later
         foreach (Collider2D shelf in ignoredShelves)
         {
             if (shelf != null)
@@ -112,12 +120,10 @@ public class FallenObject : MonoBehaviour
     {
         if (hasLanded || !isLaunched) return;
 
-        // Check if it hit the floor (lowercase)
         if (hitObject.CompareTag("floor"))
         {
             BecomeMess();
         }
-        // Check if it hit the dog (lowercase)
         else if (hitObject.CompareTag("dog"))
         {
             HitDog();
@@ -129,53 +135,125 @@ public class FallenObject : MonoBehaviour
         hasLanded = true;
         gameObject.tag = "mess"; 
 
-        // Play the floor hit animation
-        if (anim != null && !string.IsNullOrEmpty(floorHitAnimTrigger))
-        {
-            anim.SetTrigger(floorHitAnimTrigger);
-        }
-
-        if (messSprite != null)
-        {
-            spriteRenderer.sprite = messSprite;
-        }
-
-        // Apply the custom size from the Inspector!
+        if (anim != null && !string.IsNullOrEmpty(floorHitAnimTrigger)) anim.SetTrigger(floorHitAnimTrigger);
+        if (messSprite != null) spriteRenderer.sprite = messSprite;
+        
         transform.localScale = messScale;
 
-        // Lock it in place as a flat mess on the floor
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
         transform.rotation = Quaternion.identity;
 
-        // Tell GameManager to increase risk based on human awareness
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.AddRisk(transform.position);
+            // GameManager.Instance.AddRisk(transform.position);
         }
+
+        // NEW: Tell the Human directly that we made a mess and pass our position!
+        // Tell the GameManager directly that we made a mess and pass our position!
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddChaosFromMess(transform.position);
+        }
+
+        // Start autonomous sequence with standard delays
+        currentRespawnRoutine = StartCoroutine(RespawnSequence(messDuration, emptyShelfDuration));
     }
 
     private void HitDog()
     {
         hasLanded = true;
-        
         Debug.Log($"Bonk! Hit the dog. Awarding {dogHitPoints} points!");
-        // TODO: ScoreManager.Instance.AddScore(dogHitPoints);
+        
+        if (anim != null && !string.IsNullOrEmpty(dogHitAnimTrigger)) anim.SetTrigger(dogHitAnimTrigger);
 
-        // Play the dog hit animation
-        if (anim != null && !string.IsNullOrEmpty(dogHitAnimTrigger))
-        {
-            anim.SetTrigger(dogHitAnimTrigger);
-        }
-
-        // Freeze in place right where it hit the dog
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
 
-        // Destroy after the animation delay
-        Destroy(gameObject, dogDestroyDelay); 
+        // Start autonomous sequence with shorter dog delay
+        currentRespawnRoutine = StartCoroutine(RespawnSequence(dogHitDuration, emptyShelfDuration));
+    }
+
+    // --- NEW: Called by the Human to force an immediate reset ---
+    public void ForceRespawn()
+    {
+        // If it is already sitting cleanly on the shelf, ignore it
+        if (!hasLanded && !isLaunched && !isSpawning) return;
+
+        // Cancel the current slow timer
+        if (currentRespawnRoutine != null)
+        {
+            StopCoroutine(currentRespawnRoutine);
+        }
+
+        // Start the sequence with ZERO delay so it cleans up instantly!
+        currentRespawnRoutine = StartCoroutine(RespawnSequence(0f, 0f));
+    }
+
+    private IEnumerator RespawnSequence(float initialWait, float shelfWait)
+    {
+        // 1. Wait (Will be skipped if forced by Human)
+        if (initialWait > 0f) yield return new WaitForSeconds(initialWait);
+
+        myCollider.enabled = false;
+
+        // 2. Flash and Fade Out
+        Color origColor = spriteRenderer.color;
+        float timer = 0f;
+        while (timer < fadeDuration)
+        {
+            timer += Time.deltaTime;
+            float progress = timer / fadeDuration;
+            
+            float lerpAlpha = Mathf.Lerp(1f, 0f, progress);
+            float flashAlpha = lerpAlpha * (Mathf.PingPong(timer * flashSpeed, 1f) + 0.2f);
+            
+            spriteRenderer.color = new Color(origColor.r, origColor.g, origColor.b, Mathf.Clamp01(flashAlpha));
+            yield return null;
+        }
+        
+        spriteRenderer.color = new Color(origColor.r, origColor.g, origColor.b, 0f);
+
+        // 3. Wait while shelf is empty (Will be skipped if forced by Human)
+        if (shelfWait > 0f) yield return new WaitForSeconds(shelfWait);
+
+        // 4. Lock interactions and restore physical state
+        isSpawning = true;
+        gameObject.tag = originalTag;
+        spriteRenderer.sprite = originalSprite;
+        transform.localScale = originalScale;
+        transform.position = originalPosition;
+        transform.rotation = originalRotation;
+
+        if (anim != null) 
+        {
+            anim.Rebind();
+            anim.Update(0f);
+        }
+
+        // 5. Flash and Fade In
+        timer = 0f;
+        while (timer < fadeDuration)
+        {
+            timer += Time.deltaTime;
+            float progress = timer / fadeDuration;
+            
+            float lerpAlpha = Mathf.Lerp(0f, 1f, progress);
+            float flashAlpha = lerpAlpha * (Mathf.PingPong(timer * flashSpeed, 1f) + 0.2f);
+            
+            spriteRenderer.color = new Color(origColor.r, origColor.g, origColor.b, Mathf.Clamp01(flashAlpha));
+            yield return null;
+        }
+        
+        spriteRenderer.color = new Color(origColor.r, origColor.g, origColor.b, 1f);
+
+        // 6. Unlock interactions
+        myCollider.enabled = true;
+        hasLanded = false;
+        isLaunched = false;
+        isSpawning = false;
     }
 }
 

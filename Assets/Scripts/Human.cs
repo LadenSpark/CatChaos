@@ -1,85 +1,124 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Human : MonoBehaviour
 {
+    public static Human Instance { get; private set; }
+
     [Header("Movement & Pacing")]
     public float moveSpeed = 3f;
     [Range(0f, 1f)] public float idleChance = 0.3f; 
     public float minIdleTime = 1f;
     public float maxIdleTime = 3f;
 
-    [Header("Edge & Wall Detection")]
-    [Tooltip("Empty GameObject placed at the human's feet pointing forward to detect edges.")]
-    public Transform ledgeCheck;
-    [Tooltip("Empty GameObject placed at the human's front to detect walls.")]
-    public Transform wallCheck;
-    public float checkRadius = 0.2f;
-    public LayerMask groundLayer;
-
-    [Header("Vision & Target Settings")]
-    [Tooltip("Drag the Cat GameObject here.")]
-    public Transform catTransform;
-    [Tooltip("How far can the human see on the shelf?")]
+    [Header("Detection Settings")]
     public float viewDistance = 10f;
-    [Tooltip("Set this to your Cat layer AND obstacle layers so furniture blocks vision.")]
-    public LayerMask visionLayerMask;
+    public LayerMask groundLayer; 
+    public Transform catTransform;
+    public Transform lineOfSight;
+    public Transform wallCheck;
+    public Transform ledgeCheck;
+    public float wallCheckDistance = 0.5f;
+    public float ledgeCheckOffset = 0.5f;
+    public float ledgeCheckDistance = 1.0f;
 
-    [Header("Ladder Settings")]
-    public GameObject[] ladderLocations;
-    public float ladderBottomHeightY = -2f;
-    public float ladderMidHeightY = 1.5f; 
-    public float ladderTopHeightY = 5f;
+    [Header("Risk Settings")]
+    public float riskMeter = 0f;
+    public float maxRisk = 10f;
 
+    [Header("Ladder & Climb Settings")]
+    public Ladder[] ladders;
+    public float climbSpeed = 2f;
+    public float idleBeforeLadderDuration = 2f;
+    public float lookAtTopDuration = 2f;
+    public float stopAtLadderDistance = 0.3f;
+
+    [Header("Time-Based Climb Settings")]
+    [Tooltip("Minimum time in seconds between random ladder climbs (180 = 3 mins)")]
+    public float minTimeBetweenClimbs = 180f;
+    [Tooltip("Maximum time in seconds between random ladder climbs (300 = 5 mins)")]
+    public float maxTimeBetweenClimbs = 300f;
+
+    [Header("Animation References")]
+    public string climbAnimBool = "IsClimbing";
+    public string lookAnimTrigger = "Look";
+    public string lookLeftAnimTrigger = "LookLeft";
+    public string lookRightAnimTrigger = "LookRight";
+
+    private Animator animator;
     private int paceDirection = 1;
-    private bool isClimbingRoutineActive = false;
+    private bool isLadderSequenceActive = false;
     private bool isIdling = false;
-    private Animator anim;
+    
+    private float climbTimer = 0f;
+    private float nextClimbTime = 180f;
+    
+    private Coroutine currentIdleRoutine;
 
-    void Start()
+    private void Awake()
     {
-        anim = GetComponent<Animator>();
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
+        animator = GetComponent<Animator>();
+        nextClimbTime = Random.Range(minTimeBetweenClimbs, maxTimeBetweenClimbs);
     }
 
     void Update()
     {
-        if (isClimbingRoutineActive || isIdling) return;
+        if (isLadderSequenceActive || isIdling) return;
+
+        climbTimer += Time.deltaTime;
+
+        if (riskMeter >= maxRisk)
+        {
+            StartCoroutine(LadderSequenceRoutine(false)); 
+            return;
+        }
+        else if (climbTimer >= nextClimbTime)
+        {
+            StartCoroutine(LadderSequenceRoutine(true)); 
+            return;
+        }
+
         PaceBackAndForth();
     }
 
+    #region Movement & Pacing Logic
+
     void PaceBackAndForth()
     {
-        // 1. Check for walls or edges ahead
-        bool isWallAhead = wallCheck != null && Physics2D.OverlapCircle(wallCheck.position, checkRadius, groundLayer);
-        bool isGroundAhead = ledgeCheck != null && Physics2D.OverlapCircle(ledgeCheck.position, checkRadius, groundLayer);
+        bool hitWall = CheckForWall(paceDirection);
+        bool hitLedge = CheckForLedge(paceDirection); 
 
-        // If he hits a wall or is about to walk off an edge, turn around!
-        if (isWallAhead || !isGroundAhead)
+        if (hitWall || hitLedge)
         {
             FlipDirection();
             
             if (Random.value < idleChance)
             {
-                StartCoroutine(IdleRoutine());
+                currentIdleRoutine = StartCoroutine(IdleRoutine(Random.Range(minIdleTime, maxIdleTime)));
                 return;
             }
         }
 
-        // Random periodic idle check while walking
         if (Random.value < 0.002f) 
         {
-            StartCoroutine(IdleRoutine());
+            currentIdleRoutine = StartCoroutine(IdleRoutine(Random.Range(minIdleTime, maxIdleTime)));
             return;
         }
 
-        // Move forward based on direction
-        transform.Translate(Vector2.right * paceDirection * moveSpeed * Time.deltaTime);
+        transform.position += new Vector3(paceDirection * moveSpeed * Time.deltaTime, 0f, 0f);
         
-        // Ensure idles are turned off so it naturally defaults back to walking
-        if (anim != null) 
+        if (animator != null) 
         {
-            anim.SetBool("idleOne", false);
-            anim.SetBool("idleTwo", false);
+            animator.SetBool("idleOne", false);
+            animator.SetBool("idleTwo", false);
         }
     }
 
@@ -89,7 +128,6 @@ public class Human : MonoBehaviour
         SetFacingDirection(paceDirection);
     }
 
-    // NEW: Safely flips the sprite without destroying the original size scale you set in the Inspector!
     void SetFacingDirection(float direction)
     {
         Vector3 currentScale = transform.localScale;
@@ -97,190 +135,302 @@ public class Human : MonoBehaviour
         transform.localScale = currentScale;
     }
 
-    IEnumerator IdleRoutine()
+    IEnumerator IdleRoutine(float waitTime)
     {
         isIdling = true;
         
-        if (anim != null) 
+        if (animator != null) 
         {
-            // Flip a coin to choose which idle animation to play
             if (Random.value > 0.5f)
             {
-                anim.SetBool("idleOne", true);
-                anim.SetBool("idleTwo", false);
+                animator.SetBool("idleOne", true);
+                animator.SetBool("idleTwo", false);
             }
             else
             {
-                anim.SetBool("idleOne", false);
-                anim.SetBool("idleTwo", true);
+                animator.SetBool("idleOne", false);
+                animator.SetBool("idleTwo", true);
             }
         }
 
-        float waitTime = Random.Range(minIdleTime, maxIdleTime);
         yield return new WaitForSeconds(waitTime);
 
-        // After idling, random chance to turn around
         if (Random.value > 0.5f)
         {
             FlipDirection();
         }
 
-        // Turn off both idle triggers when he finishes resting to return to default walk
-        if (anim != null) 
+        if (animator != null) 
         {
-            anim.SetBool("idleOne", false);
-            anim.SetBool("idleTwo", false);
+            animator.SetBool("idleOne", false);
+            animator.SetBool("idleTwo", false);
         }
         
         isIdling = false;
     }
 
-    // Called by the GameManager when Risk hits 10
-    public void TriggerLadderSearch()
+    #endregion
+
+    #region Ladder Sequence Logic
+
+    private IEnumerator LadderSequenceRoutine(bool isTimeTriggered)
     {
-        if (!isClimbingRoutineActive)
-        {
-            StopAllCoroutines(); 
-            isIdling = false;
-            StartCoroutine(ClimbAndSearchRoutine());
-        }
-    }
-
-    IEnumerator ClimbAndSearchRoutine()
-    {
-        isClimbingRoutineActive = true;
+        isLadderSequenceActive = true;
         
-        // Ensure idles are off before climbing
-        if (anim != null) 
+        if (currentIdleRoutine != null)
         {
-            anim.SetBool("idleOne", false);
-            anim.SetBool("idleTwo", false);
+            StopCoroutine(currentIdleRoutine);
+            currentIdleRoutine = null;
         }
-
-        GameObject nearestLadder = GetNearestLadder();
-        if (nearestLadder == null)
-        {
-            Debug.LogWarning("Human: 'Where are my ladders?!'");
-            isClimbingRoutineActive = false;
-            yield break; 
-        }
-
-        float targetX = nearestLadder.transform.position.x;
-
-        // 1. Walk to the nearest ladder
-        while (Mathf.Abs(transform.position.x - targetX) > 0.1f)
-        {
-            float dir = (targetX > transform.position.x) ? 1 : -1;
-            transform.Translate(Vector2.right * dir * moveSpeed * Time.deltaTime);
-            SetFacingDirection(dir);
-            yield return null;
-        }
-
-        nearestLadder.SetActive(true);
-
-        // 2. Randomly choose mid or top height
-        float targetY = (Random.value > 0.5f) ? ladderTopHeightY : ladderMidHeightY;
-
-        // 3. Climb Up
-        if (anim != null) anim.SetBool("isClimbingUp", true);
-        while (transform.position.y < targetY)
-        {
-            transform.position = Vector3.MoveTowards(transform.position, new Vector3(transform.position.x, targetY, transform.position.z), moveSpeed * Time.deltaTime);
-            yield return null;
-        }
-        if (anim != null) anim.SetBool("isClimbingUp", false);
-
-        // 4. Randomly look left or right
-        float lookDirection = (Random.value > 0.5f) ? 1f : -1f;
-        SetFacingDirection(lookDirection);
+        isIdling = false;
         
-        if (anim != null) anim.SetBool("isLooking", true); 
-
-        // 5. Look around and actively scan for 4 seconds
-        float searchTimer = 0f;
-        bool catFound = false;
-
-        while (searchTimer < 4f)
+        if (animator != null) 
         {
-            if (CheckForCat(lookDirection))
+            animator.SetBool("idleOne", false);
+            animator.SetBool("idleTwo", false);
+        }
+
+        if (ladders == null || ladders.Length == 0) ladders = FindObjectsByType<Ladder>(FindObjectsSortMode.None);
+
+        if (ladders == null || ladders.Length == 0)
+        {
+            isLadderSequenceActive = false;
+            yield break;
+        }
+
+        Ladder chosenLadder = GetNearestLadder();
+        if (chosenLadder == null)
+        {
+            isLadderSequenceActive = false;
+            yield break;
+        }
+
+        chosenLadder.StartFlashing();
+        yield return StartCoroutine(IdleRoutine(idleBeforeLadderDuration));
+
+        Vector3 ladderPos = chosenLadder.transform.position;
+        float stuckTimer = 0f;
+        float lastX = transform.position.x;
+
+        while (Mathf.Abs(transform.position.x - ladderPos.x) > stopAtLadderDistance)
+        {
+            float dir = Mathf.Sign(ladderPos.x - transform.position.x);
+            SetFacingDirection(dir); 
+
+            transform.position += new Vector3(dir * moveSpeed * Time.deltaTime, 0f, 0f);
+            
+            if (Mathf.Abs(transform.position.x - lastX) < 0.001f)
             {
-                catFound = true;
-                break; 
+                stuckTimer += Time.deltaTime;
+                if (stuckTimer > 0.5f)
+                {
+                    Debug.LogWarning("Human stuck! Snapping out of infinite loop.");
+                    break;
+                }
             }
-            searchTimer += Time.deltaTime;
+            else
+            {
+                stuckTimer = 0f;
+                lastX = transform.position.x;
+            }
+
             yield return null;
         }
 
-        if (anim != null) anim.SetBool("isLooking", false);
-
-        // 6. Resolve the search
-        if (catFound)
-        {
-            Debug.Log("Human: 'THERE YOU ARE, YOU LITTLE RASCAL!' (Game Over!)");
-            yield break; 
-        }
-
-        // 7. Cat not found? Climb down
-        if (anim != null) anim.SetBool("isClimbingDown", true);
-        while (transform.position.y > ladderBottomHeightY)
-        {
-            transform.position = Vector3.MoveTowards(transform.position, new Vector3(transform.position.x, ladderBottomHeightY, transform.position.z), moveSpeed * Time.deltaTime);
-            yield return null;
-        }
-        if (anim != null) anim.SetBool("isClimbingDown", false);
-
-        // 8. Reset and cleanup
-        nearestLadder.SetActive(false);
-        CleanupMesses();
+        chosenLadder.StopFlashing();
         
-        isClimbingRoutineActive = false;
-    }
+        transform.position = new Vector3(ladderPos.x, transform.position.y, transform.position.z);
 
-    private bool CheckForCat(float lookDirection)
-    {
-        if (catTransform == null) return false;
-
-        Vector2 rayDirection = new Vector2(lookDirection, 0);
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, rayDirection, viewDistance, visionLayerMask);
-
-        Debug.DrawRay(transform.position, rayDirection * viewDistance, Color.red);
-
-        if (hit.collider != null && hit.collider.CompareTag("Cat"))
+        // ==========================================
+        // NEW FIX: DISABLE GRAVITY WHILE CLIMBING
+        // ==========================================
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        float originalGravity = 1f;
+        if (rb != null)
         {
-            return true;
+            originalGravity = rb.gravityScale;
+            rb.gravityScale = 0f; // Turn off gravity!
+            rb.linearVelocity = Vector2.zero; // Stop any downward momentum
         }
 
-        return false;
-    }
+        Vector3 startY = transform.position;
+        float targetY = chosenLadder.topPoint != null ? chosenLadder.topPoint.position.y : startY.y + 5f;
+        Vector3 topTarget = new Vector3(transform.position.x, targetY, transform.position.z);
 
-    private void CleanupMesses()
-    {
-        GameObject[] messesToClean = GameObject.FindGameObjectsWithTag("mess");
-        foreach (var mess in messesToClean)
+        SetAnimBool(climbAnimBool, true);
+        while (Mathf.Abs(transform.position.y - topTarget.y) > 0.05f)
         {
-            Destroy(mess);
+            transform.position = Vector3.MoveTowards(transform.position, topTarget, climbSpeed * Time.deltaTime);
+            yield return null;
         }
+        transform.position = topTarget;
+        SetAnimBool(climbAnimBool, false);
+
+        bool lookRight = Random.value > 0.5f;
+        SetFacingDirection(lookRight ? 1 : -1);
+
+        TriggerAnim(lookAnimTrigger);
+        if (lookRight) TriggerAnim(lookRightAnimTrigger);
+        else TriggerAnim(lookLeftAnimTrigger);
+
+        float lookTimer = 0f;
+        while (lookTimer < lookAtTopDuration)
+        {
+            if (CheckForCat())
+            {
+                GameOver();
+                yield break; 
+            }
+            lookTimer += Time.deltaTime;
+            yield return null;
+        }
+
+        SetAnimBool(climbAnimBool, true);
+        while (Mathf.Abs(transform.position.y - startY.y) > 0.05f)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, startY, climbSpeed * Time.deltaTime);
+            yield return null;
+        }
+        transform.position = startY;
+        SetAnimBool(climbAnimBool, false);
+
+        // ==========================================
+        // NEW FIX: RESTORE GRAVITY
+        // ==========================================
+        if (rb != null)
+        {
+            rb.gravityScale = originalGravity; // Turn gravity back on!
+        }
+
+        chosenLadder.FlashAndFadeOut(1f);
+
+        FallenObject[] allFallenObjects = FindObjectsByType<FallenObject>(FindObjectsSortMode.None);
+        foreach (FallenObject obj in allFallenObjects)
+        {
+            obj.ForceRespawn(); 
+        }
+
+        if (isTimeTriggered)
+        {
+            if (GameManager.Instance != null) GameManager.Instance.ReduceChaosByHalf();
+        }
+        else
+        {
+            if (GameManager.Instance != null) GameManager.Instance.ResetChaos();
+        }
+
+        climbTimer = 0f;
+        nextClimbTime = Random.Range(minTimeBetweenClimbs, maxTimeBetweenClimbs);
+        
+        isLadderSequenceActive = false;
     }
 
-    private GameObject GetNearestLadder()
+    private void GameOver()
     {
-        GameObject nearest = null;
-        float minDistance = Mathf.Infinity;
-        foreach (GameObject ladder in ladderLocations)
+        Debug.Log("Human: 'THERE YOU ARE, YOU LITTLE RASCAL!' (Game Over!)");
+    }
+
+    private void SetAnimBool(string paramName, bool value)
+    {
+        if (animator != null && !string.IsNullOrEmpty(paramName)) animator.SetBool(paramName, value);
+    }
+
+    private void TriggerAnim(string paramName)
+    {
+        if (animator != null && !string.IsNullOrEmpty(paramName)) animator.SetTrigger(paramName);
+    }
+
+    #endregion
+
+    #region Public Helpers (Raycasts & Detection)
+
+    private Ladder GetNearestLadder()
+    {
+        Ladder nearest = null;
+        float minDistanceX = Mathf.Infinity;
+        
+        foreach (Ladder ladder in ladders)
         {
             if (ladder != null)
             {
-                float dist = Vector2.Distance(transform.position, ladder.transform.position);
-                if (dist < minDistance)
+                float distX = Mathf.Abs(transform.position.x - ladder.transform.position.x);
+                if (distX < minDistanceX)
                 {
-                    minDistance = dist;
+                    minDistanceX = distX;
                     nearest = ladder;
                 }
             }
         }
+
         return nearest;
     }
+
+    public bool CheckForWall(float direction)
+    {
+        if (groundLayer == 0) return false;
+        Vector2 origin = wallCheck != null ? (Vector2)wallCheck.position : (Vector2)transform.position;
+        Vector2 dir = new Vector2(direction, 0f);
+        RaycastHit2D hit = Physics2D.Raycast(origin, dir, wallCheckDistance, groundLayer);
+        Debug.DrawRay(origin, dir * wallCheckDistance, hit.collider != null ? Color.red : Color.blue);
+        return hit.collider != null;
+    }
+
+    public bool CheckForLedge(float direction)
+    {
+        if (groundLayer == 0) return false;
+        Vector2 checkPos = ledgeCheck != null ? (Vector2)ledgeCheck.position : (Vector2)transform.position + new Vector2(direction * ledgeCheckOffset, 0f);
+        RaycastHit2D hit = Physics2D.Raycast(checkPos, Vector2.down, ledgeCheckDistance, groundLayer);
+        Debug.DrawRay(checkPos, Vector2.down * ledgeCheckDistance, hit.collider == null ? Color.yellow : Color.green);
+        return hit.collider == null; 
+    }
+
+    public bool CheckForCat()
+    {
+        if (catTransform == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj == null) playerObj = GameObject.FindWithTag("Cat");
+            if (playerObj != null) catTransform = playerObj.transform;
+            else return false;
+        }
+
+        Vector2 origin = lineOfSight != null ? (Vector2)lineOfSight.position : (Vector2)transform.position;
+        float facingDir = Mathf.Sign(transform.localScale.x);
+
+        Vector2 dirToCat = (Vector2)catTransform.position - origin;
+        float distanceToCat = dirToCat.magnitude;
+
+        if (distanceToCat < viewDistance)
+        {
+            if (Mathf.Sign(dirToCat.x) == facingDir || distanceToCat < 0.5f)
+            {
+                Vector2 directionToCat = dirToCat.normalized;
+                RaycastHit2D[] hits = Physics2D.RaycastAll(origin, directionToCat, viewDistance);
+                foreach (RaycastHit2D hit in hits)
+                {
+                    if (hit.collider != null && hit.collider.gameObject != gameObject)
+                    {
+                        if (hit.collider.CompareTag("Cat") || hit.collider.CompareTag("Player"))
+                        {
+                            Debug.DrawRay(origin, directionToCat * distanceToCat, Color.red);
+                            return true;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        Debug.DrawRay(origin, new Vector2(facingDir, 0f) * viewDistance, Color.green);
+        return false;
+    }
+
+    #endregion
 }
+
 // Legacy
 // using UnityEngine;
 // using System.Collections;
