@@ -1,8 +1,8 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI; // Required for the Slider
-using TMPro; // Required for TextMeshPro
+using UnityEngine.UI; 
+using TMPro; 
 
 public class GameManager : MonoBehaviour
 {
@@ -10,10 +10,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance => _instance;
 
     [SerializeField] private GameObject singlePlayerPrefab;
-    // [SerializeField] private GameObject networkPlayerPrefab;
-
     [SerializeField] private Transform spawnPoint;
-    // [SerializeField] private Transform playerTwoSpawnPoint;
 
     [Header("Chaos / Risk Settings")]
     public float chaosLevel = 0f;
@@ -23,16 +20,17 @@ public class GameManager : MonoBehaviour
     public int currentScore = 0;
 
     [Header("UI Elements")]
-    [Tooltip("Slider to visually represent the Risk/Chaos level.")]
     public Slider chaosMeterUI; 
-    [Tooltip("Text to show the numerical Chaos/Risk level.")]
     public TextMeshProUGUI chaosTextUI; 
-    [Tooltip("Text to show the player's score.")]
     public TextMeshProUGUI scoreTextUI;
+
+    [Header("Menu & Pause Settings")]
+    public GameObject pauseMenuPanel; 
+    public string mainMenuSceneName = "MainMenu"; // Name of your Main Menu scene exact spelling
+    private bool isPaused = false;
 
     private void Awake()
     {
-        // Simple Singleton pattern for easy access
         if (_instance != null && _instance != this)
         {
             Destroy(this.gameObject);
@@ -50,16 +48,16 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        // Update the UI immediately when the game starts
         UpdateUI();
+        
+        // Ensure time is flowing normally when the scene starts and the pause menu is hidden
+        Time.timeScale = 1f;
+        if (pauseMenuPanel != null) pauseMenuPanel.SetActive(false);
     }
 
-    /// <summary>
-    /// Calculates directional risk based on the Human's position and facing direction.
-    /// </summary>
     public void AddChaosFromMess(Vector3 messPosition)
     {
-        float riskToAdd = 1f; // Base risk
+        float riskToAdd = 1f; 
 
         if (Human.Instance != null)
         {
@@ -68,75 +66,38 @@ public class GameManager : MonoBehaviour
 
             if (humanFacing == directionToMess)
             {
-                riskToAdd = 2f; // Double risk if they were looking that way!
+                riskToAdd = 2f; 
             }
         }
 
         AddChaos(riskToAdd);
     }
 
-    /// <summary>
-    /// Increases chaos level, forwards risk to Human, and updates UI.
-    /// </summary>
     public void AddChaos(float amount)
     {
         chaosLevel = Mathf.Clamp(chaosLevel + amount, 0f, maxChaos);
-        Debug.Log($"Chaos Level Increased! Current Chaos: {chaosLevel}");
-
-        if (Human.Instance != null)
-        {
-            Human.Instance.riskMeter = this.chaosLevel;
-        }
-        
         UpdateUI();
     }
 
-    /// <summary>
-    /// Called when the human climbs randomly due to time. Reduces chaos by half (rounded down).
-    /// </summary>
     public void ReduceChaosByHalf()
     {
         float reduction = Mathf.Floor(chaosLevel / 2f);
         chaosLevel -= reduction;
-        Debug.Log($"Random patrol finished! Chaos reduced by {reduction}. Current Chaos: {chaosLevel}");
-        
-        if (Human.Instance != null)
-        {
-            Human.Instance.riskMeter = this.chaosLevel;
-        }
-        
         UpdateUI();
     }
 
-    /// <summary>
-    /// Called when the human completes a full forced climb, resetting the meter.
-    /// </summary>
     public void ResetChaos()
     {
         chaosLevel = 0f;
-        Debug.Log("Chaos Level Reset to 0.");
-        
-        if (Human.Instance != null)
-        {
-            Human.Instance.riskMeter = this.chaosLevel;
-        }
-        
         UpdateUI();
     }
 
-    /// <summary>
-    /// Adds points to the player's score and updates the UI.
-    /// </summary>
     public void AddScore(int points)
     {
         currentScore += points;
-        Debug.Log($"Scored {points} points! Total Score: {currentScore}");
         UpdateUI();
     }
 
-    /// <summary>
-    /// Refreshes all assigned UI elements to match current variables.
-    /// </summary>
     private void UpdateUI()
     {
         if (chaosMeterUI != null)
@@ -155,4 +116,56 @@ public class GameManager : MonoBehaviour
             scoreTextUI.text = $"Score: {currentScore}";
         }
     }
+
+    #region Pause & Scene Management
+
+    public void PauseGame()
+    {
+        isPaused = true;
+        Time.timeScale = 0f; // Freezes the game physics and time
+        if (pauseMenuPanel != null) pauseMenuPanel.SetActive(true);
+    }
+
+    public void ResumeGame()
+    {
+        isPaused = false;
+        Time.timeScale = 1f; // Unfreezes the game
+        if (pauseMenuPanel != null) pauseMenuPanel.SetActive(false);
+    }
+
+    public void RestartGame()
+    {
+        Time.timeScale = 1f; // MUST reset time before loading, or the new scene will be frozen!
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    public void LoadMainMenu()
+    {
+        Time.timeScale = 1f; // MUST reset time before loading
+        SceneManager.LoadScene(mainMenuSceneName);
+    }
+
+    public void QuitApp()
+    {
+        Debug.Log("Exiting Application...");
+        Application.Quit();
+    }
+
+    public void TriggerGameOver()
+    {
+        Debug.Log("Game Over Triggered! Submitting Score...");
+        
+        // Pause the game mechanics
+        Time.timeScale = 0f; 
+        
+        // Send the score to PlayFab
+        if (PlayFabManager.Instance != null)
+        {
+            PlayFabManager.Instance.SubmitScore(currentScore);
+        }
+
+        // TODO: Show your Game Over UI screen here!
+    }
+
+    #endregion
 }

@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu.unity
     guid: 2a9dd55469a57c8419d942bba1afff71
   - enabled: 1
-    path: Assets/Scenes/SinglePlayer-ori.unity
+    path: Assets/Scenes/SinglePlayer.unity
     guid: 32788dec4e97cbf44a59d4ac04ff8c61
   - enabled: 1
     path: Assets/Scenes/Credits.unity

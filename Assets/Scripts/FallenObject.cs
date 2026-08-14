@@ -127,6 +127,7 @@ public class FallenObject : MonoBehaviour
         else if (hitObject.CompareTag("dog"))
         {
             HitDog();
+            GameManager.Instance?.AddScore(dogHitPoints);
         }
     }
 

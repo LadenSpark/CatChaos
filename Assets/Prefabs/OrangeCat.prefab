@@ -131,7 +131,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5334329665036383071, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: m_TagString
-      value: Player
+      value: cat
       objectReference: {fileID: 0}
     - target: {fileID: 7088760878238229418, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       propertyPath: GlobalObjectIdHash
@@ -209,7 +209,8 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: -4
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4846681833611093621, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 8604797167915631399, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
@@ -227,7 +228,7 @@ PrefabInstance:
       addedObject: {fileID: 3087452689151218673}
     - targetCorrespondingSourceObject: {fileID: 5334329665036383071, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7436823919095451712}
+      addedObject: {fileID: -5561431612378897382}
   m_SourcePrefab: {fileID: 100100000, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}
 --- !u!1 &5272073607220215513 stripped
 GameObject:
@@ -291,8 +292,8 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!58 &7436823919095451712
-CircleCollider2D:
+--- !u!61 &-5561431612378897382
+BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -325,8 +326,18 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.75, y: 0.5}
-  m_Radius: 5.2
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 10.53, y: 8.48}
+    newSize: {x: 2.45, y: 4.63}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 10.53, y: 8.48}
+  m_EdgeRadius: 0
 --- !u!4 &8378686510096371361 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8604797167915631399, guid: b3d5b3014c78b4841a4938a3dd047dad, type: 3}

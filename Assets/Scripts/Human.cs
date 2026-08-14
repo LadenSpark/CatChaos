@@ -23,10 +23,6 @@ public class Human : MonoBehaviour
     public float ledgeCheckOffset = 0.5f;
     public float ledgeCheckDistance = 1.0f;
 
-    [Header("Risk Settings")]
-    public float riskMeter = 0f;
-    public float maxRisk = 10f;
-
     [Header("Ladder & Climb Settings")]
     public Ladder[] ladders;
     public float climbSpeed = 2f;
@@ -35,21 +31,22 @@ public class Human : MonoBehaviour
     public float stopAtLadderDistance = 0.3f;
 
     [Header("Time-Based Climb Settings")]
-    [Tooltip("Minimum time in seconds between random ladder climbs (180 = 3 mins)")]
+    [Tooltip("Minimum time in seconds between random ladder climbs")]
     public float minTimeBetweenClimbs = 180f;
-    [Tooltip("Maximum time in seconds between random ladder climbs (300 = 5 mins)")]
+    [Tooltip("Maximum time in seconds between random ladder climbs")]
     public float maxTimeBetweenClimbs = 300f;
 
     [Header("Animation References")]
-    public string climbAnimBool = "IsClimbing";
-    public string lookAnimTrigger = "Look";
-    public string lookLeftAnimTrigger = "LookLeft";
-    public string lookRightAnimTrigger = "LookRight";
+    public string climbUpAnimBool = "IsClimbingUp";
+    public string climbDownAnimBool = "IsClimbingDown";
+    public string lookLeftAnimBool = "IsLookingLeft";
+    public string lookRightAnimBool = "IsLookingRight";
 
     private Animator animator;
     private int paceDirection = 1;
     private bool isLadderSequenceActive = false;
     private bool isIdling = false;
+    private bool isClimbingRungs = false; // NEW: Tracks when he is physically on the ladder
     
     private float climbTimer = 0f;
     private float nextClimbTime = 180f;
@@ -71,11 +68,18 @@ public class Human : MonoBehaviour
 
     void Update()
     {
+        // 1. ALWAYS check for the cat FIRST, unless actively climbing up/down the rungs!
+        if (!isClimbingRungs)
+        {
+            if (CheckForCat()) return; // Stop doing anything else if cat is spotted
+        }
+
+        // 2. If he is doing a ladder sequence or resting, don't pace.
         if (isLadderSequenceActive || isIdling) return;
 
         climbTimer += Time.deltaTime;
 
-        if (riskMeter >= maxRisk)
+        if (GameManager.Instance != null && GameManager.Instance.chaosLevel >= GameManager.Instance.maxChaos)
         {
             StartCoroutine(LadderSequenceRoutine(false)); 
             return;
@@ -176,6 +180,8 @@ public class Human : MonoBehaviour
     private IEnumerator LadderSequenceRoutine(bool isTimeTriggered)
     {
         isLadderSequenceActive = true;
+        climbTimer = 0f;
+        nextClimbTime = Random.Range(minTimeBetweenClimbs, maxTimeBetweenClimbs);
         
         if (currentIdleRoutine != null)
         {
@@ -212,6 +218,7 @@ public class Human : MonoBehaviour
         float stuckTimer = 0f;
         float lastX = transform.position.x;
 
+        // Walk to the ladder (Vision is still ON here!)
         while (Mathf.Abs(transform.position.x - ladderPos.x) > stopAtLadderDistance)
         {
             float dir = Mathf.Sign(ladderPos.x - transform.position.x);
@@ -241,66 +248,68 @@ public class Human : MonoBehaviour
         
         transform.position = new Vector3(ladderPos.x, transform.position.y, transform.position.z);
 
-        // ==========================================
-        // NEW FIX: DISABLE GRAVITY WHILE CLIMBING
-        // ==========================================
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         float originalGravity = 1f;
         if (rb != null)
         {
             originalGravity = rb.gravityScale;
-            rb.gravityScale = 0f; // Turn off gravity!
-            rb.linearVelocity = Vector2.zero; // Stop any downward momentum
+            rb.gravityScale = 0f; 
+            rb.linearVelocity = Vector2.zero; 
         }
 
         Vector3 startY = transform.position;
         float targetY = chosenLadder.topPoint != null ? chosenLadder.topPoint.position.y : startY.y + 5f;
         Vector3 topTarget = new Vector3(transform.position.x, targetY, transform.position.z);
 
-        SetAnimBool(climbAnimBool, true);
+        // Climb Up
+        isClimbingRungs = true; // NEW: Turns off vision while climbing
+        SetAnimBool(climbUpAnimBool, true);
         while (Mathf.Abs(transform.position.y - topTarget.y) > 0.05f)
         {
             transform.position = Vector3.MoveTowards(transform.position, topTarget, climbSpeed * Time.deltaTime);
             yield return null;
         }
         transform.position = topTarget;
-        SetAnimBool(climbAnimBool, false);
+        SetAnimBool(climbUpAnimBool, false);
+        isClimbingRungs = false; // NEW: Turns vision back on at the top!
 
+        // Look Left or Right
         bool lookRight = Random.value > 0.5f;
         SetFacingDirection(lookRight ? 1 : -1);
 
-        TriggerAnim(lookAnimTrigger);
-        if (lookRight) TriggerAnim(lookRightAnimTrigger);
-        else TriggerAnim(lookLeftAnimTrigger);
+        if (lookRight) SetAnimBool(lookRightAnimBool, true);
+        else SetAnimBool(lookLeftAnimBool, true);
 
         float lookTimer = 0f;
         while (lookTimer < lookAtTopDuration)
         {
-            if (CheckForCat())
-            {
-                GameOver();
-                yield break; 
-            }
+            // Update() handles the vision check now, so we just wait here!
             lookTimer += Time.deltaTime;
             yield return null;
         }
 
-        SetAnimBool(climbAnimBool, true);
+        // Done looking, turn off the bool
+        if (lookRight) SetAnimBool(lookRightAnimBool, false);
+        else SetAnimBool(lookLeftAnimBool, false);
+
+        // Climb Down
+        isClimbingRungs = true; // NEW: Turns off vision while climbing down
+        SetAnimBool(climbDownAnimBool, true);
         while (Mathf.Abs(transform.position.y - startY.y) > 0.05f)
         {
             transform.position = Vector3.MoveTowards(transform.position, startY, climbSpeed * Time.deltaTime);
             yield return null;
         }
         transform.position = startY;
-        SetAnimBool(climbAnimBool, false);
+        SetAnimBool(climbDownAnimBool, false);
+        isClimbingRungs = false; // NEW: Turns vision back on when feet hit the ground
 
-        // ==========================================
-        // NEW FIX: RESTORE GRAVITY
-        // ==========================================
         if (rb != null)
         {
-            rb.gravityScale = originalGravity; // Turn gravity back on!
+            rb.gravityScale = originalGravity; 
         }
+
+        SetFacingDirection(paceDirection);
 
         chosenLadder.FlashAndFadeOut(1f);
 
@@ -318,9 +327,6 @@ public class Human : MonoBehaviour
         {
             if (GameManager.Instance != null) GameManager.Instance.ResetChaos();
         }
-
-        climbTimer = 0f;
-        nextClimbTime = Random.Range(minTimeBetweenClimbs, maxTimeBetweenClimbs);
         
         isLadderSequenceActive = false;
     }
@@ -333,11 +339,6 @@ public class Human : MonoBehaviour
     private void SetAnimBool(string paramName, bool value)
     {
         if (animator != null && !string.IsNullOrEmpty(paramName)) animator.SetBool(paramName, value);
-    }
-
-    private void TriggerAnim(string paramName)
-    {
-        if (animator != null && !string.IsNullOrEmpty(paramName)) animator.SetTrigger(paramName);
     }
 
     #endregion
@@ -371,7 +372,6 @@ public class Human : MonoBehaviour
         Vector2 origin = wallCheck != null ? (Vector2)wallCheck.position : (Vector2)transform.position;
         Vector2 dir = new Vector2(direction, 0f);
         RaycastHit2D hit = Physics2D.Raycast(origin, dir, wallCheckDistance, groundLayer);
-        Debug.DrawRay(origin, dir * wallCheckDistance, hit.collider != null ? Color.red : Color.blue);
         return hit.collider != null;
     }
 
@@ -380,7 +380,6 @@ public class Human : MonoBehaviour
         if (groundLayer == 0) return false;
         Vector2 checkPos = ledgeCheck != null ? (Vector2)ledgeCheck.position : (Vector2)transform.position + new Vector2(direction * ledgeCheckOffset, 0f);
         RaycastHit2D hit = Physics2D.Raycast(checkPos, Vector2.down, ledgeCheckDistance, groundLayer);
-        Debug.DrawRay(checkPos, Vector2.down * ledgeCheckDistance, hit.collider == null ? Color.yellow : Color.green);
         return hit.collider == null; 
     }
 
@@ -388,44 +387,67 @@ public class Human : MonoBehaviour
     {
         if (catTransform == null)
         {
-            GameObject playerObj = GameObject.FindWithTag("Player");
-            if (playerObj == null) playerObj = GameObject.FindWithTag("Cat");
-            if (playerObj != null) catTransform = playerObj.transform;
+            GameObject catObj = GameObject.FindWithTag("cat");
+            if (catObj != null) catTransform = catObj.transform;
             else return false;
         }
 
         Vector2 origin = lineOfSight != null ? (Vector2)lineOfSight.position : (Vector2)transform.position;
         float facingDir = Mathf.Sign(transform.localScale.x);
 
-        Vector2 dirToCat = (Vector2)catTransform.position - origin;
-        float distanceToCat = dirToCat.magnitude;
+        // 1. THE FIX: Shoot the vision laser STRICTLY horizontal. No more diagonal heat-seeking!
+        Vector2 visionDirection = new Vector2(facingDir, 0f);
 
-        if (distanceToCat < viewDistance)
+        RaycastHit2D[] hits = Physics2D.RaycastAll(origin, visionDirection, viewDistance);
+
+        // 2. Sort hits by distance so the closest physical object is evaluated first
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit2D hit in hits)
         {
-            if (Mathf.Sign(dirToCat.x) == facingDir || distanceToCat < 0.5f)
+            // 3. Ignore the human itself and invisible triggers
+            if (hit.collider != null && hit.collider.gameObject != gameObject && !hit.collider.isTrigger)
             {
-                Vector2 directionToCat = dirToCat.normalized;
-                RaycastHit2D[] hits = Physics2D.RaycastAll(origin, directionToCat, viewDistance);
-                foreach (RaycastHit2D hit in hits)
+                if (hit.collider.CompareTag("cat"))
                 {
-                    if (hit.collider != null && hit.collider.gameObject != gameObject)
-                    {
-                        if (hit.collider.CompareTag("Cat") || hit.collider.CompareTag("Player"))
-                        {
-                            Debug.DrawRay(origin, directionToCat * distanceToCat, Color.red);
-                            return true;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
+                    // The horizontal ray hit the cat!
+                    Debug.DrawRay(origin, visionDirection * hit.distance, Color.red, 2f);
+                    if (GameManager.Instance != null) GameManager.Instance.TriggerGameOver();
+                    return true;
+                }
+                else
+                {
+                    // Hit a solid obstacle (like a wall, or the dropped item) BEFORE the cat.
+                    // Because it's a straight horizontal line, the dropped item now safely blocks his vision!
+                    break;
                 }
             }
         }
 
-        Debug.DrawRay(origin, new Vector2(facingDir, 0f) * viewDistance, Color.green);
+        // Green debug laser to show exactly where he is looking
+        Debug.DrawRay(origin, visionDirection * viewDistance, Color.green);
         return false;
+    }
+
+    #endregion
+
+    #region Bulletproof Gizmo Debugging
+
+    private void OnDrawGizmos()
+    {
+        Vector2 origin = lineOfSight != null ? (Vector2)lineOfSight.position : (Vector2)transform.position;
+        float facingDir = transform.localScale.x != 0 ? Mathf.Sign(transform.localScale.x) : 1f;
+
+        // 1. ALWAYS draw the GREEN forward vision ray
+        Gizmos.color = Color.green;
+        Gizmos.DrawRay(origin, new Vector2(facingDir, 0f) * viewDistance);
+
+        // 2. If the cat is found in the scene, draw a YELLOW tracking line directly to it
+        if (catTransform != null)
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawLine(origin, catTransform.position); 
+        }
     }
 
     #endregion
