@@ -111,7 +111,7 @@ namespace TouchControlsKit
                 float currentDistance = Vector2.Distance( defaultPosition, currentPosition );
                 float touchForce = 100f;
 
-                float calculatedBorderSize = ( backgroundRT.sizeDelta.magnitude / 2f ) * borderSize / 16f;
+                float calculatedBorderSize = ( backgroundRT.sizeDelta.magnitude / 2f ) * borderSize / 36f;
                 
                 if( currentDistance > calculatedBorderSize ) { // borderPosition 
                     currentPosition = defaultPosition + currentDirection.normalized * calculatedBorderSize;
