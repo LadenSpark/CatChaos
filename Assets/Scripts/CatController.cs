@@ -136,8 +136,9 @@ public class CatController : MonoBehaviour
 
         bool jumpPressed = Input.GetKeyDown(KeyCode.Space) ||
                            Input.GetKeyDown(KeyCode.W) ||
-                           TCKInput.GetButtonDown(jumpButtonIdentifier);
-            
+                           TCKInput.GetButtonDown(interactButtonIdentifier);
+
+
         if (jumpPressed && isGrounded)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
