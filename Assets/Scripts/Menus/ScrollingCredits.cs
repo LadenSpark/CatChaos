@@ -1,35 +1,47 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class ScrollingCredits : MonoBehaviour
 {
     [Header("Scrolling Settings")]
-    public float scrollSpeed = 50f;
-    public float endYPosition = 1000f;
-    public bool loop = false;
+    public float scrollSpeed = 50f; //[cite: 1]
+    public float endYPosition = 1000f; //[cite: 1]
+    public bool loop = false; //[cite: 1]
 
     [Header("Interaction Settings")]
-    public float resumeDelay = 3f;
+    public float resumeDelay = 3f; //[cite: 1]
 
-    private Vector3 startPosition;
-    private bool isTouching = false;
-    private float resumeTimer = 0f;
-    private Vector2 lastTouchPosition;
+    [Header("Post-Credits Navigation")]
+    public GameObject postCreditsPanel;
+    public string gameSceneName = "GameScene";
+    public string mainMenuSceneName = "MainMenu";
+
+    private Vector3 startPosition; //[cite: 1]
+    private bool isTouching = false; //[cite: 1]
+    private float resumeTimer = 0f; //[cite: 1]
+    private Vector2 lastTouchPosition; //[cite: 1]
+    private bool hasReachedBottom = false;
 
     void Start()
     {
-        startPosition = transform.localPosition;
+        startPosition = transform.localPosition; //[cite: 1]
+        if (postCreditsPanel != null)
+        {
+            postCreditsPanel.SetActive(false);
+        }
     }
 
     void Update()
     {
+        if (hasReachedBottom) return;
+
         HandleInput();
 
-        // Only auto-scroll if not touching and the delay timer has expired
         if (!isTouching)
         {
             if (resumeTimer > 0)
             {
-                resumeTimer -= Time.deltaTime;
+                resumeTimer -= Time.deltaTime; //[cite: 1]
             }
             else
             {
@@ -42,54 +54,76 @@ public class ScrollingCredits : MonoBehaviour
 
     void HandleInput()
     {
-        // Mouse/Touch Down
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0)) //[cite: 1]
         {
-            isTouching = true;
-            lastTouchPosition = Input.mousePosition;
-            resumeTimer = resumeDelay; // Set delay for when we eventually release
+            isTouching = true; //[cite: 1]
+            lastTouchPosition = Input.mousePosition; //[cite: 1]
+            resumeTimer = resumeDelay; //[cite: 1]
         }
 
-        // Mouse/Touch Held (Dragging)
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0)) //[cite: 1]
         {
-            Vector2 currentTouchPosition = Input.mousePosition;
-            float deltaY = currentTouchPosition.y - lastTouchPosition.y;
-            
-            // Move the credits based on drag delta
-            transform.localPosition += Vector3.up * deltaY;
-            lastTouchPosition = currentTouchPosition;
+            Vector2 currentTouchPosition = Input.mousePosition; //[cite: 1]
+            float deltaY = currentTouchPosition.y - lastTouchPosition.y; //[cite: 1]
+            transform.localPosition += Vector3.up * deltaY; //[cite: 1]
+            lastTouchPosition = currentTouchPosition; //[cite: 1]
         }
 
-        // Mouse/Touch Up
-        if (Input.GetMouseButtonUp(0))
+        if (Input.GetMouseButtonUp(0)) //[cite: 1]
         {
-            isTouching = false;
-            resumeTimer = resumeDelay; // Start the 3-second countdown
+            isTouching = false; //[cite: 1]
+            resumeTimer = resumeDelay; //[cite: 1]
         }
     }
 
     void AutoScroll()
     {
-        transform.localPosition += Vector3.up * scrollSpeed * Time.deltaTime;
+        transform.localPosition += Vector3.up * scrollSpeed * Time.deltaTime; //[cite: 1]
     }
 
     void CheckBounds()
     {
-        if (transform.localPosition.y >= endYPosition)
+        if (transform.localPosition.y >= endYPosition) //[cite: 1]
         {
-            if (loop)
+            if (loop) //[cite: 1]
             {
-                transform.localPosition = startPosition;
+                transform.localPosition = startPosition; //[cite: 1]
             }
             else
             {
-                // We don't disable the script here anymore so input still works 
-                // but we clamp it so it doesn't fly off forever
-                Vector3 pos = transform.localPosition;
-                pos.y = endYPosition;
-                transform.localPosition = pos;
+                Vector3 pos = transform.localPosition; //[cite: 1]
+                pos.y = endYPosition; //[cite: 1]
+                transform.localPosition = pos; //[cite: 1]
+
+                TriggerCreditsEnd();
             }
         }
     }
+
+    void TriggerCreditsEnd()
+    {
+        hasReachedBottom = true;
+        isTouching = false;
+
+        if (postCreditsPanel != null)
+        {
+            postCreditsPanel.SetActive(true);
+        }
+    }
+
+    #region Post-Credits Navigation
+
+    public void OnPlayAgainClicked()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(gameSceneName);
+    }
+
+    public void OnMainMenuClicked()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(mainMenuSceneName);
+    }
+
+    #endregion
 }

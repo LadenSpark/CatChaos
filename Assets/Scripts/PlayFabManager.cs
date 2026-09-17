@@ -1,205 +1,242 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using PlayFab;
 using PlayFab.ClientModels;
+
+#if UNITY_ANDROID && !UNITY_EDITOR
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
-using TMPro;
-using System.Collections.Generic;
+#endif
 
 public class PlayFabManager : MonoBehaviour
 {
     public static PlayFabManager Instance { get; private set; }
 
-    [Header("Leaderboard Settings")]
-    [Tooltip("The exact name of the Statistic in your PlayFab Dashboard")]
-    public string leaderboardName = "HighScore";
+    [Header("Leaderboard Defaults")]
+    public string defaultLevelStatistic = "Level_1_HighScore";
 
-    [Header("Guest Scoreboard UI")]
-    public GameObject guestNamePanel;
-    public TMP_InputField guestNameInput;
-
-    private bool hasDisplayName = false;
-    private int pendingScore = 0;
+    public string CachedDisplayName { get; private set; } = "";
+    public string PlayFabId { get; private set; } = "";
+    public bool IsLoggedIn { get; private set; } = false;
+    public bool IsGpgAuthenticated { get; private set; } = false;
 
     private void Awake()
     {
-        // Make sure only one PlayFabManager ever exists, and keep it alive across scene loads
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
     {
-        if (guestNamePanel != null) guestNamePanel.SetActive(false);
-
-        // Modern V11+ Initialization
-        PlayGamesPlatform.Activate();
-        AuthenticateWithGoogle();
+        InitializeAuthentication();
     }
 
-    #region Authentication
+    #region Cross-Platform Auto-Authentication
 
-    public void AuthenticateWithGoogle()
+    public void InitializeAuthentication()
     {
-        Debug.Log("Attempting Google Play Games Login...");
-        
-        PlayGamesPlatform.Instance.Authenticate((SignInStatus status) =>
+#if UNITY_ANDROID && !UNITY_EDITOR
+        AuthenticateGooglePlayGames();
+#else
+        LoginWithDeviceHardware();
+#endif
+    }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+    private void AuthenticateGooglePlayGames()
+    {
+        PlayGamesPlatform.Activate();
+        PlayGamesPlatform.Instance.Authenticate((status) =>
         {
             if (status == SignInStatus.Success)
             {
-                PlayGamesPlatform.Instance.RequestServerSideAccess(true, authCode =>
+                PlayGamesPlatform.Instance.RequestServerSideAccess(true, (authCode) =>
                 {
-                    LoginToPlayFabWithGoogle(authCode);
+                    if (!string.IsNullOrEmpty(authCode))
+                    {
+                        ExchangeGpgAuthCodeWithPlayFab(authCode);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("GPG server auth code empty. Falling back to device login.");
+                        LoginWithDeviceHardware();
+                    }
                 });
             }
             else
             {
-                Debug.LogWarning($"GPG Login Failed ({status}). Logging in as Guest...");
-                LoginAsGuest();
+                Debug.LogWarning($"GPG Login Failed or Canceled ({status}). Falling back to Android Device ID...");
+                LoginWithDeviceHardware();
             }
         });
     }
 
-    private void LoginToPlayFabWithGoogle(string authCode)
+    private void ExchangeGpgAuthCodeWithPlayFab(string authCode)
     {
-        var request = new LoginWithGoogleAccountRequest
+        var request = new LoginWithGooglePlayGamesServicesRequest
         {
             ServerAuthCode = authCode,
-            CreateAccount = true
-        };
-
-        PlayFabClientAPI.LoginWithGoogleAccount(request, OnGoogleLoginSuccess, OnPlayFabError);
-    }
-
-    private void OnGoogleLoginSuccess(LoginResult result)
-    {
-        Debug.Log("PlayFab: Logged in with Google!");
-        hasDisplayName = true; // GPG users always have a name
-        
-        // Grab their Google Play Games username and automatically set it in PlayFab!
-        string googleUsername = PlayGamesPlatform.Instance.GetUserDisplayName();
-        SetPlayFabDisplayName(googleUsername, false);
-    }
-
-    public void LoginAsGuest()
-    {
-        Debug.Log("Attempting to create/login to Android Guest Account...");
-
-        var request = new LoginWithAndroidDeviceIDRequest
-        {
-            AndroidDeviceId = SystemInfo.deviceUniqueIdentifier,
             CreateAccount = true,
-            OS = SystemInfo.operatingSystem,
-            AndroidDevice = SystemInfo.deviceModel,
-            // We ask PlayFab to return the Player Profile so we can check if they already set a name!
             InfoRequestParameters = new GetPlayerCombinedInfoRequestParams
             {
                 GetPlayerProfile = true
             }
         };
 
-        PlayFabClientAPI.LoginWithAndroidDeviceID(request, OnGuestLoginSuccess, OnPlayFabError);
+        PlayFabClientAPI.LoginWithGooglePlayGamesServices(request, OnGpgLoginSuccess, (error) =>
+        {
+            Debug.LogError($"PlayFab GPG Login Failed: {error.GenerateErrorReport()}. Falling back to device login.");
+            LoginWithDeviceHardware();
+        });
     }
 
-    private void OnGuestLoginSuccess(LoginResult result)
+    private void OnGpgLoginSuccess(LoginResult result)
     {
-        Debug.Log("PlayFab: Logged in as Guest!");
-        
-        // Check if this guest device already set a name in a previous play session
-        if (result.InfoResultPayload != null && result.InfoResultPayload.PlayerProfile != null)
+        IsLoggedIn = true;
+        IsGpgAuthenticated = true;
+        PlayFabId = result.PlayFabId;
+        ResolveCachedProfileName(result.InfoResultPayload);
+
+        string gpgGamerTag = PlayGamesPlatform.Instance.GetUserDisplayName();
+        if (!string.IsNullOrEmpty(gpgGamerTag) && CachedDisplayName != gpgGamerTag)
         {
-            if (!string.IsNullOrEmpty(result.InfoResultPayload.PlayerProfile.DisplayName))
-            {
-                Debug.Log($"Welcome back, Guest: {result.InfoResultPayload.PlayerProfile.DisplayName}");
-                hasDisplayName = true;
-            }
+            UpdatePlayerDisplayName(gpgGamerTag, null, null);
         }
+    }
+#endif
+
+    private void LoginWithDeviceHardware()
+    {
+        // LoginWithAndroidDeviceID bypasses the 'Custom ID creations disabled' restriction
+        var request = new LoginWithAndroidDeviceIDRequest
+        {
+            AndroidDeviceId = SystemInfo.deviceUniqueIdentifier,
+            OS = SystemInfo.operatingSystem,
+            AndroidDevice = SystemInfo.deviceModel,
+            CreateAccount = true,
+            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams
+            {
+                GetPlayerProfile = true
+            }
+        };
+
+        PlayFabClientAPI.LoginWithAndroidDeviceID(request, OnDeviceLoginSuccess, OnPlayFabError);
+    }
+
+    private void OnDeviceLoginSuccess(LoginResult result)
+    {
+        IsLoggedIn = true;
+        IsGpgAuthenticated = false;
+        PlayFabId = result.PlayFabId;
+        ResolveCachedProfileName(result.InfoResultPayload);
+        Debug.Log($"Silent Device Login Success. PlayFabID: {PlayFabId} | DisplayName: {CachedDisplayName}");
+    }
+
+    private void ResolveCachedProfileName(GetPlayerCombinedInfoResultPayload payload)
+    {
+        if (payload?.PlayerProfile != null && !string.IsNullOrEmpty(payload.PlayerProfile.DisplayName))
+        {
+            CachedDisplayName = payload.PlayerProfile.DisplayName;
+        }
+    }
+
+    public bool HasDisplayName()
+    {
+        return !string.IsNullOrEmpty(CachedDisplayName);
     }
 
     #endregion
 
-    #region Leaderboard Submission & Display Name
+    #region Score Submission & Profile Management
 
-    /// <summary>
-    /// Called by your GameManager when the human catches the cat.
-    /// </summary>
-    public void SubmitScore(int score)
-    {
-        pendingScore = score;
-
-        if (hasDisplayName)
-        {
-            // They already have a tag, send the score immediately!
-            SendScoreToPlayFab(pendingScore);
-        }
-        else
-        {
-            // They are a new guest. Show the UI to ask for a tag.
-            if (guestNamePanel != null) guestNamePanel.SetActive(true);
-        }
-    }
-
-    /// <summary>
-    /// Link this to your UI "Submit" button on the Guest Name Panel
-    /// </summary>
-    public void SubmitGuestName()
-    {
-        if (guestNameInput != null && !string.IsNullOrEmpty(guestNameInput.text))
-        {
-            hasDisplayName = true;
-            SetPlayFabDisplayName(guestNameInput.text, true);
-            guestNamePanel.SetActive(false); 
-        }
-        else
-        {
-            Debug.LogWarning("Please enter a valid guest tag!");
-        }
-    }
-
-    private void SetPlayFabDisplayName(string displayName, bool submitScoreAfter)
+    public void UpdatePlayerDisplayName(string newName, Action onSuccess, Action<string> onFailure)
     {
         var request = new UpdateUserTitleDisplayNameRequest
         {
-            DisplayName = displayName
+            DisplayName = newName
         };
 
-        PlayFabClientAPI.UpdateUserTitleDisplayName(request, result => 
+        PlayFabClientAPI.UpdateUserTitleDisplayName(request, (result) =>
         {
-            Debug.Log($"PlayFab: Scoreboard Tag updated to {result.DisplayName}");
-            if (submitScoreAfter)
-            {
-                SendScoreToPlayFab(pendingScore);
-            }
-        }, OnPlayFabError);
+            CachedDisplayName = result.DisplayName;
+            Debug.Log($"Display name bound to: {CachedDisplayName}");
+            onSuccess?.Invoke();
+        },
+        (error) =>
+        {
+            Debug.LogError($"Name update error: {error.GenerateErrorReport()}");
+            onFailure?.Invoke(error.ErrorMessage);
+        });
     }
 
-    private void SendScoreToPlayFab(int score)
+    public void SubmitScore(int score, string statKey = null, Action onSuccess = null, Action<string> onFailure = null)
     {
+        string targetKey = string.IsNullOrEmpty(statKey) ? defaultLevelStatistic : statKey;
+
         var request = new UpdatePlayerStatisticsRequest
         {
             Statistics = new List<StatisticUpdate>
             {
                 new StatisticUpdate
                 {
-                    StatisticName = leaderboardName,
+                    StatisticName = targetKey,
                     Value = score
                 }
             }
         };
 
-        PlayFabClientAPI.UpdatePlayerStatistics(request, 
-            result => Debug.Log($"Successfully submitted score of {score} to {leaderboardName}!"), 
-            OnPlayFabError);
+        PlayFabClientAPI.UpdatePlayerStatistics(request, (result) =>
+        {
+            Debug.Log($"Score {score} posted to {targetKey}");
+            onSuccess?.Invoke();
+        },
+        (error) =>
+        {
+            Debug.LogError($"Score submission failed: {error.GenerateErrorReport()}");
+            onFailure?.Invoke(error.ErrorMessage);
+        });
+    }
+
+    public void SetDisplayNameAndSubmitScore(string newName, int score, string statKey = null, Action onSuccess = null, Action<string> onFailure = null)
+    {
+        UpdatePlayerDisplayName(newName, () =>
+        {
+            SubmitScore(score, statKey, onSuccess, onFailure);
+        }, onFailure);
+    }
+
+    public void FetchLeaderboard(string statKey, int maxResults, Action<List<PlayerLeaderboardEntry>> onSuccess, Action<string> onFailure)
+    {
+        string targetKey = string.IsNullOrEmpty(statKey) ? defaultLevelStatistic : statKey;
+
+        var request = new GetLeaderboardRequest
+        {
+            StatisticName = targetKey,
+            StartPosition = 0,
+            MaxResultsCount = maxResults
+        };
+
+        PlayFabClientAPI.GetLeaderboard(request, (result) =>
+        {
+            onSuccess?.Invoke(result.Leaderboard);
+        },
+        (error) =>
+        {
+            Debug.LogError($"Fetch Leaderboard error: {error.GenerateErrorReport()}");
+            onFailure?.Invoke(error.ErrorMessage);
+        });
     }
 
     private void OnPlayFabError(PlayFabError error)
     {
-        Debug.LogError("PlayFab Error: " + error.GenerateErrorReport());
+        Debug.LogError($"PlayFab Error: {error.GenerateErrorReport()}");
     }
 
     #endregion
